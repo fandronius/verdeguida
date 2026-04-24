@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5ede0"/>
+      <stop offset="100%" stop-color="#e8dcc4"/>
+    </linearGradient>
+
+    <!-- Libro: carta crema, sobria -->
+    <linearGradient id="pageLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f9f3e5"/>
+      <stop offset="100%" stop-color="#e6d9bd"/>
+    </linearGradient>
+    <linearGradient id="pageRight" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#f9f3e5"/>
+      <stop offset="100%" stop-color="#e6d9bd"/>
+    </linearGradient>
+    <linearGradient id="spine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6b7a3a"/>
+      <stop offset="100%" stop-color="#4a5528"/>
+    </linearGradient>
+
+    <!-- Foglie verdi in gradazione oliva -->
+    <linearGradient id="stemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#4a5528"/>
+      <stop offset="100%" stop-color="#7a8c3c"/>
+    </linearGradient>
+    <linearGradient id="leafDark" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#8a9d3a"/>
+      <stop offset="100%" stop-color="#4a5528"/>
+    </linearGradient>
+    <linearGradient id="leafLight" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#a5b84a"/>
+      <stop offset="100%" stop-color="#6b7a3a"/>
+    </linearGradient>
+    <linearGradient id="leafMid" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#98ad40"/>
+      <stop offset="100%" stop-color="#5a6d22"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sfondo crema con leggero gradiente -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Ombra morbida sotto il libro -->
+  <ellipse cx="256" cy="412" rx="165" ry="12" fill="#2a2418" opacity="0.18"/>
+
+  <!-- ========== LIBRO APERTO ========== -->
+  <!-- Base del libro: ombra posteriore/costa -->
+  <path d="M 100 380
+           L 100 340
+           Q 100 325, 115 322
+           L 248 308
+           L 264 308
+           L 397 322
+           Q 412 325, 412 340
+           L 412 380
+           Z"
+        fill="url(#spine)"/>
+
+  <!-- Pagina sinistra -->
+  <path d="M 115 332
+           L 256 318
+           L 256 388
+           Q 256 392, 252 392
+           L 125 392
+           Q 115 392, 115 382
+           Z"
+        fill="url(#pageLeft)" stroke="#c5b896" stroke-width="1.5"/>
+
+  <!-- Pagina destra -->
+  <path d="M 397 332
+           L 256 318
+           L 256 388
+           Q 256 392, 260 392
+           L 387 392
+           Q 397 392, 397 382
+           Z"
+        fill="url(#pageRight)" stroke="#c5b896" stroke-width="1.5"/>
+
+  <!-- Righe di testo sulla pagina sinistra (decorative, sobrie) -->
+  <line x1="140" y1="345" x2="235" y2="345" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+  <line x1="140" y1="355" x2="220" y2="355" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+  <line x1="140" y1="365" x2="230" y2="365" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+  <line x1="140" y1="375" x2="210" y2="375" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Righe di testo sulla pagina destra -->
+  <line x1="277" y1="345" x2="372" y2="345" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+  <line x1="277" y1="355" x2="360" y2="355" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+  <line x1="277" y1="365" x2="372" y2="365" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+  <line x1="277" y1="375" x2="350" y2="375" stroke="#b8a980" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Leggera ombra al centro (dove si apre il libro) -->
+  <rect x="253" y="318" width="6" height="74" fill="#8b7a52" opacity="0.35"/>
+
+  <!-- ========== PIANTA CHE NASCE DAL CENTRO DEL LIBRO ========== -->
+  <!-- Stelo principale -->
+  <path d="M 256 318
+           Q 254 280, 256 240
+           Q 258 200, 256 160
+           Q 255 130, 256 105"
+        stroke="url(#stemGrad)" stroke-width="7" fill="none" stroke-linecap="round"/>
+
+  <!-- Piccolo cotiledone alla base (le due foglioline del germoglio) -->
+  <ellipse cx="244" cy="315" rx="7" ry="4" fill="url(#leafLight)" transform="rotate(-15 244 315)"/>
+  <ellipse cx="268" cy="315" rx="7" ry="4" fill="url(#leafLight)" transform="rotate(15 268 315)"/>
+
+  <!-- Foglia 1: grande sinistra (circa a 2/3 dell'altezza) -->
+  <path d="M 256 245
+           C 220 240, 185 232, 168 218
+           C 158 208, 162 192, 178 190
+           C 205 188, 235 210, 253 235
+           C 256 240, 258 244, 256 245 Z"
+        fill="url(#leafDark)"/>
+  <!-- Venatura centrale -->
+  <path d="M 178 200 Q 220 225, 253 237" stroke="#2d3810" stroke-width="1.8" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Foglia 2: grande destra (a 1/2 altezza) -->
+  <path d="M 256 200
+           C 295 193, 335 180, 355 160
+           C 366 148, 362 128, 342 130
+           C 312 136, 280 168, 258 195
+           C 254 198, 253 202, 256 200 Z"
+        fill="url(#leafMid)"/>
+  <!-- Venatura -->
+  <path d="M 342 140 Q 298 175, 260 198" stroke="#2d3810" stroke-width="1.8" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Foglia 3: piccola sinistra alta -->
+  <path d="M 256 145
+           C 232 140, 210 130, 202 115
+           C 196 102, 204 92, 218 96
+           C 234 102, 250 125, 257 143
+           C 258 145, 259 146, 256 145 Z"
+        fill="url(#leafLight)"/>
+  <!-- Venatura -->
+  <path d="M 215 105 Q 235 122, 256 143" stroke="#2d3810" stroke-width="1.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Foglia apicale centrale: germoglio nuovo -->
+  <path d="M 256 108
+           C 250 92, 250 78, 256 72
+           C 263 68, 270 78, 270 92
+           C 270 102, 263 108, 256 108 Z"
+        fill="url(#leafMid)"/>
+  <path d="M 256 75 L 256 108" stroke="#2d3810" stroke-width="1.2" fill="none" opacity="0.5"/>
+
+  <!-- Piccola foglia destra intermedia -->
+  <path d="M 256 170
+           C 272 167, 286 158, 290 148
+           C 293 140, 287 134, 279 137
+           C 268 142, 258 160, 256 168
+           C 255 170, 255 171, 256 170 Z"
+        fill="url(#leafDark)"/>
+
+  <!-- Bordo sottile decorativo -->
+  <rect x="3" y="3" width="506" height="506" rx="110" fill="none" stroke="#4a5528" stroke-width="3" opacity="0.15"/>
+</svg>
