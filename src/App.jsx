@@ -410,7 +410,7 @@ function getConsigliTerreno({ terrenoTipo, terrenoPH, terrenoDurezza }) {
 const AGRUMI = new Set(["limone", "arancio", "mandarino", "pompelmo", "cedro", "lime", "bergamotto", "kumquat", "clementina"]);
 const ALTITUDINE_MONTANA = 500; // m — soglia per considerare "montagna"
 
-const APP_VERSION = "1.7.2";
+const APP_VERSION = "1.8.0";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -1032,6 +1032,75 @@ function useSwipeHorizontal(onSwipeLeft, onSwipeRight) {
   return { onTouchStart, onTouchMove, onTouchEnd };
 }
 
+// ============================================================
+// Pull-to-refresh: gesto di scorrimento verso il basso
+// Attivo solo se l'utente è in cima alla pagina (window.scrollY === 0).
+// Soglia 80px per triggerare, feedback visivo proporzionale al gesto.
+// ============================================================
+function usePullToRefresh(onRefresh) {
+  const [pullDistance, setPullDistance] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const touchStartY = useRef(null);
+  const isPulling = useRef(false);
+
+  const THRESHOLD = 80;       // distanza per triggerare refresh
+  const MAX_PULL = 140;       // resistenza massima della tirata
+  const RESISTANCE = 0.5;     // fattore di smorzamento (più basso = più "rigido")
+
+  const onTouchStart = (e) => {
+    // attivo solo se sono in cima
+    if (window.scrollY > 0) {
+      touchStartY.current = null;
+      return;
+    }
+    touchStartY.current = e.touches[0].clientY;
+    isPulling.current = true;
+  };
+
+  const onTouchMove = (e) => {
+    if (!isPulling.current || touchStartY.current === null || refreshing) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy <= 0) {
+      setPullDistance(0);
+      return;
+    }
+    // se nel frattempo ha scrollato giù, annulla
+    if (window.scrollY > 0) {
+      isPulling.current = false;
+      setPullDistance(0);
+      return;
+    }
+    const resistanced = Math.min(dy * RESISTANCE, MAX_PULL);
+    setPullDistance(resistanced);
+  };
+
+  const onTouchEnd = async () => {
+    if (!isPulling.current) return;
+    isPulling.current = false;
+    if (pullDistance >= THRESHOLD && !refreshing) {
+      setRefreshing(true);
+      setPullDistance(THRESHOLD); // bloccato nella soglia mentre carica
+      try {
+        await onRefresh();
+      } finally {
+        setRefreshing(false);
+        setPullDistance(0);
+        touchStartY.current = null;
+      }
+    } else {
+      setPullDistance(0);
+      touchStartY.current = null;
+    }
+  };
+
+  return {
+    handlers: { onTouchStart, onTouchMove, onTouchEnd },
+    pullDistance,
+    refreshing,
+    ready: pullDistance >= THRESHOLD,
+  };
+}
+
 export default function VerdeGuida() {
   const [view, setView] = useState("home"); // home | calendario | stagione | catalogo | appezzamenti
 
@@ -1495,6 +1564,97 @@ export default function VerdeGuida() {
     }
   );
 
+  // ========== PULL TO REFRESH ==========
+  const [newVersionAvailable, setNewVersionAvailable] = useState(false);
+
+  // Ricarica tutti i dati dal localStorage
+  const reloadDataFromStorage = async () => {
+    try {
+      const [aRes, pRes, tRes, cRes, nRes, dRes] = await Promise.all([
+        window.storage.get("appezzamenti").catch(() => null),
+        window.storage.get("user_plants").catch(() => null),
+        window.storage.get("completed_tasks").catch(() => null),
+        window.storage.get("custom_plants").catch(() => null),
+        window.storage.get("notif_settings").catch(() => null),
+        window.storage.get("day_tasks_done").catch(() => null),
+      ]);
+      if (aRes) setAppezzamenti(JSON.parse(aRes.value));
+      if (pRes) setUserPlants(JSON.parse(pRes.value));
+      if (tRes) setCompletedTasks(JSON.parse(tRes.value));
+      if (cRes) setCustomPlants(JSON.parse(cRes.value));
+      if (nRes) setNotifSettings(JSON.parse(nRes.value));
+      if (dRes) {
+        const done = JSON.parse(dRes.value);
+        const trentaGgFa = new Date();
+        trentaGgFa.setDate(trentaGgFa.getDate() - 30);
+        const cutoff = trentaGgFa.toISOString().slice(0, 10);
+        const cleaned = {};
+        Object.entries(done).forEach(([key, val]) => {
+          if (key.slice(0, 10) >= cutoff) cleaned[key] = val;
+        });
+        setDayTasksDone(cleaned);
+      }
+    } catch (e) {
+      console.error("Errore refresh dati:", e);
+    }
+  };
+
+  // Controlla se c'è un aggiornamento del service worker disponibile
+  const checkForAppUpdate = async () => {
+    if (!("serviceWorker" in navigator)) return false;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return false;
+      await reg.update(); // chiede al browser di controllare sul server
+      // Se dopo update c'è un worker in "waiting", è nuova versione pronta
+      if (reg.waiting) {
+        setNewVersionAvailable(true);
+        return true;
+      }
+      // Se c'è un worker in "installing", aspetto brevemente
+      if (reg.installing) {
+        await new Promise(resolve => {
+          reg.installing.addEventListener("statechange", (e) => {
+            if (e.target.state === "installed" && navigator.serviceWorker.controller) {
+              setNewVersionAvailable(true);
+              resolve(true);
+            }
+          });
+          setTimeout(resolve, 3000); // timeout di sicurezza
+        });
+      }
+      return false;
+    } catch (e) {
+      console.error("Errore check update:", e);
+      return false;
+    }
+  };
+
+  const handleRefresh = async () => {
+    // minimo 600ms di animazione per dare feedback chiaro
+    const start = Date.now();
+    await Promise.all([
+      reloadDataFromStorage(),
+      checkForAppUpdate(),
+    ]);
+    const elapsed = Date.now() - start;
+    if (elapsed < 600) await new Promise(r => setTimeout(r, 600 - elapsed));
+  };
+
+  // Attiva nuova versione (skip waiting del service worker + reload)
+  const applyNewVersion = async () => {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg?.waiting) {
+        reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
+    } catch {}
+    // ricarica la pagina dopo breve attesa per far completare skipWaiting
+    setTimeout(() => window.location.reload(), 300);
+  };
+
+  const pullToRefresh = usePullToRefresh(handleRefresh);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--c-bg)" }}>
@@ -1507,8 +1667,60 @@ export default function VerdeGuida() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--c-bg)", color: "var(--c-ink)", fontFamily: "var(--f-sans)" }}>
+    <div className="min-h-screen"
+      {...pullToRefresh.handlers}
+      style={{ background: "var(--c-bg)", color: "var(--c-ink)", fontFamily: "var(--f-sans)" }}>
+
+      {/* Indicatore pull-to-refresh */}
+      {(pullToRefresh.pullDistance > 0 || pullToRefresh.refreshing) && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 500,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: `${Math.max(pullToRefresh.pullDistance, pullToRefresh.refreshing ? 80 : 0)}px`,
+          background: "linear-gradient(to bottom, rgba(245,237,224,0.95), rgba(245,237,224,0))",
+          pointerEvents: "none",
+          transition: pullToRefresh.refreshing ? "none" : "height 200ms ease-out",
+        }}>
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "6px",
+            opacity: Math.min(pullToRefresh.pullDistance / 80, 1),
+          }}>
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              border: `3px solid ${pullToRefresh.ready || pullToRefresh.refreshing ? "var(--c-terra)" : "var(--c-border)"}`,
+              borderTopColor: "transparent",
+              animation: pullToRefresh.refreshing ? "spin 800ms linear infinite" : "none",
+              transform: !pullToRefresh.refreshing ? `rotate(${pullToRefresh.pullDistance * 3}deg)` : undefined,
+              transition: !pullToRefresh.refreshing ? "border-color 200ms" : "none",
+            }}/>
+            <p className="serif italic" style={{
+              fontSize: "11px",
+              color: "var(--c-olive-dark)",
+              whiteSpace: "nowrap",
+            }}>
+              {pullToRefresh.refreshing
+                ? "Aggiornamento..."
+                : pullToRefresh.ready
+                  ? "Rilascia per aggiornare"
+                  : "Tira giù per aggiornare"}
+            </p>
+          </div>
+        </div>
+      )}
+
       <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         :root {
           --c-bg: #f5ede0;
           --c-cream: #efe4d1;
@@ -1767,6 +1979,53 @@ export default function VerdeGuida() {
       )}
 
       {showTour && <TourModal onClose={handleCloseTour} />}
+
+      {/* Popup "Nuova versione disponibile" */}
+      {newVersionAvailable && (
+        <ModalPortal>
+          <div style={{
+            position: "fixed",
+            bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+            left: "12px",
+            right: "12px",
+            zIndex: 9998,
+            display: "flex",
+            justifyContent: "center",
+          }}>
+            <div className="card fade-up" style={{
+              maxWidth: "500px",
+              width: "100%",
+              background: "var(--c-ink)",
+              color: "var(--c-cream)",
+              borderColor: "var(--c-terra)",
+              borderWidth: "2px",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+            }}>
+              <div className="flex items-start gap-3">
+                <div className="text-3xl flex-shrink-0">🌱</div>
+                <div className="flex-1">
+                  <h4 className="serif font-bold text-lg">Nuova versione disponibile</h4>
+                  <p className="text-xs opacity-80 mt-1 leading-relaxed">
+                    Una versione aggiornata di VerdeGuida è pronta. Aggiorna per avere tutte le ultime novità.
+                  </p>
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => setNewVersionAvailable(false)}
+                      className="btn-ghost text-xs flex-1 justify-center"
+                      style={{ color: "var(--c-cream)", borderColor: "var(--c-cream)" }}>
+                      Più tardi
+                    </button>
+                    <button onClick={applyNewVersion}
+                      className="btn-primary text-xs flex-1 justify-center"
+                      style={{ background: "var(--c-terra)", color: "var(--c-cream)" }}>
+                      Aggiorna ora
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
 
       {showSettings && (
         <SettingsModal
