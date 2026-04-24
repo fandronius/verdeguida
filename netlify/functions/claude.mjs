@@ -1,9 +1,6 @@
-// Netlify Function: proxy verso Anthropic API
-// La API key sta in una env var di Netlify (ANTHROPIC_API_KEY)
-// Il browser chiama /api/claude e questo inoltra ad api.anthropic.com
+// Netlify Function: proxy verso Anthropic API con logging errori dettagliato
 
 export default async (req, context) => {
-  // CORS
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -23,7 +20,9 @@ export default async (req, context) => {
 
   const apiKey = Netlify.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "Server non configurato: manca ANTHROPIC_API_KEY" }), {
+    return new Response(JSON.stringify({
+      error: { message: "Server non configurato: manca ANTHROPIC_API_KEY" }
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -42,14 +41,27 @@ export default async (req, context) => {
       body: JSON.stringify(body),
     });
 
-    const data = await anthropicRes.json();
+    // Leggo la risposta come testo prima, per poter loggare gli errori
+    const textResponse = await anthropicRes.text();
 
-    return new Response(JSON.stringify(data), {
-      status: anthropicRes.status,
+    // Se Anthropic ha risposto con un errore, lo inoltro verbatim
+    if (!anthropicRes.ok) {
+      console.error("Anthropic API error:", anthropicRes.status, textResponse);
+      return new Response(textResponse, {
+        status: anthropicRes.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(textResponse, {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("Proxy error:", err);
+    return new Response(JSON.stringify({
+      error: { message: `Errore proxy: ${err.message}` }
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
