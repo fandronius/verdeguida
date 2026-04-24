@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Calendar, Sprout, BookOpen, Bell, Trash2, X, Droplets, Scissors, Sun, Leaf, CheckCircle2, Circle, MapPin, Home, Flower2, Edit3, Trees, Lightbulb, ExternalLink, Search, Layers, Menu, AlertTriangle, Clock, Euro, Settings, Download, Upload, HelpCircle, MoreHorizontal, ChevronRight } from "lucide-react";
 
 // ============================================================
@@ -32,7 +33,7 @@ const PLANT_CATALOG = [
     semina: [3,4], trapianto: [4,5], raccolta: [7,8,9],
     spazio: "60 cm tra piante", acqua: "alta", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 4, prezzoKg: 2.5,
+    resaKg: 2.5, prezzoKg: 2.5,
     giorniMaturazione: 80,
     concimi: [
       { nome: "Compost maturo", quando: "Al trapianto", come: "Una manciata nella buca di piantagione, mescolato alla terra" },
@@ -45,7 +46,7 @@ const PLANT_CATALOG = [
     semina: [4,5], trapianto: [5,6], raccolta: [6,7,8,9],
     spazio: "1 m tra piante", acqua: "alta", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 8, prezzoKg: 2.0,
+    resaKg: 5, prezzoKg: 2.0,
     giorniMaturazione: 55,
     concimi: [
       { nome: "Letame maturo o compost", quando: "Prima del trapianto", come: "Incorporato nel terreno (2-3 kg/mq)" },
@@ -57,7 +58,7 @@ const PLANT_CATALOG = [
     semina: [2,3,4,5,8,9,10], trapianto: [3,4,5,9,10], raccolta: [4,5,6,7,10,11],
     spazio: "25 cm tra piante", acqua: "media", sole: "mezz'ombra",
     difficolta: "facile", vasoOk: true,
-    resaKg: 0.4, prezzoKg: 3.0,
+    resaKg: 0.3, prezzoKg: 3.0,
     giorniMaturazione: 55,
     concimi: [
       { nome: "Compost leggero", quando: "Prima del trapianto", come: "Una manciata per pianta, superficiale" },
@@ -69,7 +70,7 @@ const PLANT_CATALOG = [
     semina: [4,5], trapianto: [5,6], raccolta: [6,7,8,9],
     spazio: "30 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 0.3, prezzoKg: 25.0,
+    resaKg: 0.15, prezzoKg: 25.0,
     giorniMaturazione: 35,
     concimi: [
       { nome: "Compost maturo", quando: "In piantagione", come: "Poco, non ama substrati troppo ricchi" },
@@ -81,7 +82,7 @@ const PLANT_CATALOG = [
     semina: [2,3], trapianto: [5], raccolta: [7,8,9,10],
     spazio: "50 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 2, prezzoKg: 3.0,
+    resaKg: 1.2, prezzoKg: 3.0,
     giorniMaturazione: 90,
     concimi: [
       { nome: "Compost maturo", quando: "Al trapianto", come: "Manciata nella buca" },
@@ -94,7 +95,7 @@ const PLANT_CATALOG = [
     semina: [2,3], trapianto: [5], raccolta: [7,8,9,10],
     spazio: "60 cm tra piante", acqua: "alta", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 3, prezzoKg: 2.0,
+    resaKg: 2, prezzoKg: 2.0,
     giorniMaturazione: 85,
     concimi: [
       { nome: "Letame maturo", quando: "Prima del trapianto", come: "Incorporato abbondantemente (3 kg/mq)" },
@@ -106,7 +107,7 @@ const PLANT_CATALOG = [
     semina: [3,4,5,6,7], trapianto: [], raccolta: [6,7,8,9,10],
     spazio: "5 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 0.12, prezzoKg: 1.8,
+    resaKg: 0.08, prezzoKg: 1.8,
     giorniMaturazione: 100,
     concimi: [
       { nome: "Compost stramaturo", quando: "2-3 mesi prima della semina", come: "Incorporato leggero; mai letame fresco (causa ramificazioni)" },
@@ -118,7 +119,7 @@ const PLANT_CATALOG = [
     semina: [2,3,9,10], trapianto: [2,3,10], raccolta: [6,7],
     spazio: "15 cm tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: false,
-    resaKg: 0.15, prezzoKg: 1.5,
+    resaKg: 0.12, prezzoKg: 1.5,
     giorniMaturazione: 120,
     concimi: [
       { nome: "Compost molto maturo", quando: "In pre-impianto", come: "Leggero; mai letame fresco" },
@@ -130,7 +131,7 @@ const PLANT_CATALOG = [
     semina: [4,5,6,7], trapianto: [], raccolta: [6,7,8,9],
     spazio: "20 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 0.5, prezzoKg: 4.5,
+    resaKg: 0.3, prezzoKg: 4.5,
     giorniMaturazione: 60,
     concimi: [
       { nome: "Compost leggero", quando: "Pre-semina", come: "Poco: i legumi fissano azoto da soli" },
@@ -142,7 +143,7 @@ const PLANT_CATALOG = [
     semina: [3,4], trapianto: [4,5,9,10], raccolta: [1,2,3,4,5,6,7,8,9,10,11,12],
     spazio: "80 cm tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 1, prezzoKg: 15.0,
+    resaKg: 0.3, prezzoKg: 15.0,
     giorniMaturazione: 180,
     concimi: [
       { nome: "Compost maturo", quando: "In piantagione", come: "Poco: predilige terreni poveri e drenati" },
@@ -155,7 +156,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [3,4,10], raccolta: [11,12,1,2,3,4,5],
     spazio: "4 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 30, prezzoKg: 2.5,
+    resaKg: 15, prezzoKg: 2.5,
     concimi: [
       { nome: "Letame maturo", quando: "Fine inverno", come: "2-3 kg alla base, interrato leggero" },
       { nome: "Concime per agrumi (naturale)", quando: "Primavera ed estate", come: "Seguendo dose prodotto; miscele con cornunghia" },
@@ -167,7 +168,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [10,11,2,3], raccolta: [6,8,9],
     spazio: "5 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: false,
-    resaKg: 40, prezzoKg: 4.0,
+    resaKg: 20, prezzoKg: 4.0,
     concimi: [
       { nome: "Letame maturo", quando: "Fine autunno", come: "Una carriola distribuita sotto la chioma e interrata" },
     ]
@@ -177,7 +178,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [3,4,10,11], raccolta: [10,11,12],
     spazio: "6 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 25, prezzoKg: 3.0,
+    resaKg: 15, prezzoKg: 3.0,
     concimi: [
       { nome: "Letame maturo", quando: "Fine inverno", come: "3-5 kg/pianta distribuiti sotto la chioma" },
       { nome: "Sansa/potature triturate (pacciamatura)", quando: "In autunno", come: "Al piede come apporto organico lento" },
@@ -188,7 +189,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [11,12,1,2], raccolta: [6,7,8],
     spazio: "5 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 50, prezzoKg: 2.5,
+    resaKg: 25, prezzoKg: 2.5,
     concimi: [
       { nome: "Letame maturo", quando: "Fine autunno", come: "2-3 kg/pianta, interrato leggero sotto chioma" },
       { nome: "Cenere di legna", quando: "Pre-fioritura", come: "1-2 kg distribuiti al piede, per potassio e pH" },
@@ -199,7 +200,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [11,12,1,2,3], raccolta: [8,9,10],
     spazio: "2 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "difficile", vasoOk: false,
-    resaKg: 8, prezzoKg: 3.5,
+    resaKg: 4, prezzoKg: 3.5,
     concimi: [
       { nome: "Letame maturo o compost", quando: "Fine inverno", come: "1-2 kg/pianta interrati leggero" },
       { nome: "Sovescio di leguminose", quando: "Autunno-inverno", come: "Semina trifoglio/favino tra i filari, si interra in primavera" },
@@ -210,7 +211,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [11,12,1,2], raccolta: [8,9,10],
     spazio: "4 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 60, prezzoKg: 2.0,
+    resaKg: 30, prezzoKg: 2.0,
     concimi: [
       { nome: "Letame maturo", quando: "Autunno-inverno", come: "3-4 kg/pianta sotto la chioma" },
       { nome: "Compost", quando: "Primavera", come: "Manciata intorno al piede" },
@@ -221,7 +222,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [11,12,1,2], raccolta: [5,6],
     spazio: "6 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 30, prezzoKg: 6.0,
+    resaKg: 15, prezzoKg: 6.0,
     concimi: [
       { nome: "Letame maturo", quando: "Fine autunno", come: "2-3 kg/pianta sotto la chioma" },
       { nome: "Cenere di legna", quando: "Dopo la raccolta", come: "Spolverata leggera per potassio" },
@@ -232,7 +233,7 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [11,12,1,2], raccolta: [6,7],
     spazio: "5 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 40, prezzoKg: 3.0,
+    resaKg: 20, prezzoKg: 3.0,
     concimi: [
       { nome: "Letame maturo", quando: "Fine autunno", come: "2-3 kg/pianta distribuiti sotto la chioma" },
       { nome: "Compost maturo", quando: "Primavera", come: "Leggero rinforzo prima della ripresa vegetativa" },
@@ -255,7 +256,161 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.6.0";
+// ============================================================
+// CONSIGLI TERRENO — in base a tipo, pH, durezza
+// ============================================================
+function getConsigliTerreno({ terrenoTipo, terrenoPH, terrenoDurezza }) {
+  const consigli = [];
+
+  // Per tipo di terreno
+  if (terrenoTipo === "argilloso") {
+    consigli.push({
+      titolo: "Terreno argilloso",
+      problema: "Trattiene molta acqua, si compatta e tende a impermeabilizzarsi.",
+      rimedi: [
+        "Incorpora sabbia silicea di fiume (20-30% del volume lavorato)",
+        "Aggiungi compost maturo o letame (almeno 3-4 kg/mq ogni 2 anni)",
+        "Pacciama sempre per evitare crepe da siccità",
+        "Non lavorarlo mai quando bagnato: formi zolle durissime",
+      ],
+      prodotti: ["sabbia silicea di fiume", "compost maturo", "perlite agricola", "corteccia fine"],
+    });
+  }
+  if (terrenoTipo === "sabbioso") {
+    consigli.push({
+      titolo: "Terreno sabbioso",
+      problema: "Troppo drenante, non trattiene acqua né nutrienti.",
+      rimedi: [
+        "Incorpora compost in quantità (4-5 kg/mq) per dare struttura",
+        "Aggiungi torba bionda per aumentare ritenzione idrica",
+        "Usa argilla bentonitica (10-15%) per legare particelle",
+        "Pacciama spesso per ridurre l'evaporazione",
+      ],
+      prodotti: ["compost maturo", "torba bionda", "argilla bentonitica", "humus di lombrico"],
+    });
+  }
+  if (terrenoTipo === "limoso") {
+    consigli.push({
+      titolo: "Terreno limoso",
+      problema: "Facile da lavorare ma può indurirsi in superficie (crosta) e drenare male.",
+      rimedi: [
+        "Incorpora sostanza organica abbondante (compost, letame)",
+        "Lavora quando è leggermente umido, mai secco né fradicio",
+        "Pacciama con paglia o sfalcio per mantenere struttura soffice",
+      ],
+      prodotti: ["compost maturo", "paglia", "corteccia tritata"],
+    });
+  }
+  if (terrenoTipo === "calcareo") {
+    consigli.push({
+      titolo: "Terreno calcareo",
+      problema: "pH alto, spesso causa clorosi (ingiallimento) soprattutto negli agrumi e piante acidofile.",
+      rimedi: [
+        "Evita piante acidofile (azalee, ortensie, mirtilli) o coltivale in vaso con terriccio acido",
+        "Integra zolfo agricolo per abbassare lentamente il pH",
+        "Aggiungi torba acida nelle buche di piantagione",
+        "Per agrumi: concime chelato di ferro se ingialliscono",
+      ],
+      prodotti: ["zolfo agricolo", "torba acida (di sfagno)", "chelato di ferro", "solfato di ammonio"],
+    });
+  }
+  if (terrenoTipo === "torboso") {
+    consigli.push({
+      titolo: "Terreno torboso",
+      problema: "Molto acido e povero di nutrienti minerali, a volte troppo umido.",
+      rimedi: [
+        "Correggi con calce agricola per alzare pH",
+        "Aggiungi cenere di legna (apporta potassio e alcalinizza)",
+        "Se umido: crea drenaggio con ciottoli in fondo",
+      ],
+      prodotti: ["calce agricola", "cenere di legna", "ghiaia grossa per drenaggio"],
+    });
+  }
+  if (terrenoTipo === "franco") {
+    consigli.push({
+      titolo: "Terreno franco (misto)",
+      problema: "Sei fortunato: è il tipo ideale, equilibrato tra sabbia, limo e argilla.",
+      rimedi: [
+        "Mantieni la fertilità con apporti regolari di compost (2 kg/mq all'anno)",
+        "Pacciama per conservare umidità e struttura",
+        "Ruota le colture per evitare stanchezza del suolo",
+      ],
+      prodotti: ["compost maturo", "humus di lombrico", "pacciamatura di paglia"],
+    });
+  }
+
+  // Per pH
+  if (terrenoPH === "acido") {
+    consigli.push({
+      titolo: "pH acido (< 6.5)",
+      problema: "Alcune piante (olivo, legumi, brassicacee) soffrono. Favorisce acidofile.",
+      rimedi: [
+        "Per correggere verso il neutro: calce agricola (200-300 g/mq in autunno)",
+        "Cenere di legna come alternativa naturale (meno efficace, 500 g/mq)",
+        "Ideale per: mirtilli, azalee, ortensie blu, rododendri, patate, fragole",
+      ],
+      prodotti: ["calce agricola", "dolomite", "cenere di legna"],
+    });
+  }
+  if (terrenoPH === "basico") {
+    consigli.push({
+      titolo: "pH basico (> 7.5)",
+      problema: "Gli agrumi ingialliscono (clorosi ferrica). Limita assorbimento ferro e manganese.",
+      rimedi: [
+        "Zolfo agricolo (30-50 g/mq) per abbassare lentamente",
+        "Torba acida nelle buche di piantagione",
+        "Concime chelato di ferro per piante clorotiche (es. agrumi, ortensie)",
+      ],
+      prodotti: ["zolfo agricolo", "torba acida di sfagno", "chelato di ferro EDDHA"],
+    });
+  }
+
+  // Per durezza
+  if (terrenoDurezza === "compatto") {
+    consigli.push({
+      titolo: "Terreno compatto / duro",
+      problema: "Radici faticano a svilupparsi, acqua ristagna in superficie o scorre via.",
+      rimedi: [
+        "Lavorazione profonda in autunno con forcone o vanga (non motozappa)",
+        "Sovescio con piante a radice profonda (rafano, senape, favino) che rompono il suolo",
+        "Apporto massiccio di sostanza organica per arieggiare",
+        "Valuta bancali rialzati: bypassi il problema del terreno esistente",
+      ],
+      prodotti: ["compost maturo", "paglia", "forcone da vanga", "semi da sovescio (favino, senape)"],
+    });
+  }
+  if (terrenoDurezza === "medio") {
+    consigli.push({
+      titolo: "Drenaggio medio",
+      problema: "Va bene così — manutenzione ordinaria.",
+      rimedi: [
+        "Apporto annuale di compost per mantenere struttura",
+        "Pacciama per proteggere la superficie",
+      ],
+      prodotti: ["compost maturo"],
+    });
+  }
+  if (terrenoDurezza === "sciolto") {
+    consigli.push({
+      titolo: "Terreno sciolto",
+      problema: "Drena benissimo, ma può perdere rapidamente acqua e nutrienti.",
+      rimedi: [
+        "Irrigazioni più frequenti ma meno abbondanti",
+        "Compost e humus per aumentare ritenzione",
+        "Pacciamatura ridondante per ridurre evaporazione",
+      ],
+      prodotti: ["humus di lombrico", "compost maturo", "pacciamatura spessa"],
+    });
+  }
+
+  return consigli;
+}
+
+// Agrumi — sensibili al gelo e alle forti escursioni termiche
+const AGRUMI = new Set(["limone", "arancio", "mandarino", "pompelmo", "cedro", "lime", "bergamotto", "kumquat", "clementina"]);
+const ALTITUDINE_MONTANA = 500; // m — soglia per considerare "montagna"
+
+const APP_VERSION = "1.7.1";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -881,6 +1036,24 @@ export default function VerdeGuida() {
   const [view, setView] = useState("home"); // home | calendario | stagione | catalogo | appezzamenti
 
   const [showTour, setShowTour] = useState(false);
+
+  // Al primo accesso in assoluto, apri automaticamente il tour. Solo una volta.
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem("tour_seen");
+      if (!seen) {
+        // piccolo delay per far apparire dopo il caricamento iniziale
+        const t = setTimeout(() => setShowTour(true), 500);
+        return () => clearTimeout(t);
+      }
+    } catch {}
+  }, []);
+
+  // Quando il tour viene chiuso, segna che l'utente l'ha visto
+  const handleCloseTour = () => {
+    setShowTour(false);
+    try { localStorage.setItem("tour_seen", "1"); } catch {}
+  };
   const [appezzamenti, setAppezzamenti] = useState([]);
   const [userPlants, setUserPlants] = useState([]);
   const [completedTasks, setCompletedTasks] = useState({});
@@ -1408,10 +1581,20 @@ export default function VerdeGuida() {
               <Sun size={14}/> <span className="serif italic">{MESI[currentMonth]} · {new Date().getFullYear()}</span>
             </div>
             <button onClick={() => setShowTour(true)}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition"
-              style={{ background: "var(--c-cream)", border: "1.5px solid var(--c-border)", cursor: "pointer" }}
+              className="rounded-full flex items-center gap-1.5 transition tour-cta"
+              style={{
+                background: "var(--c-terra)",
+                color: "var(--c-cream)",
+                border: "none",
+                cursor: "pointer",
+                padding: "6px 14px",
+                fontSize: "12px",
+                fontWeight: 700,
+                boxShadow: "0 2px 6px rgba(42,36,24,0.15)",
+              }}
               title="Come funziona VerdeGuida">
-              <HelpCircle size={16} style={{ color: "var(--c-ink)" }}/>
+              <HelpCircle size={14}/>
+              <span>Guida</span>
             </button>
             <button onClick={() => setShowSettings(true)}
               className="w-9 h-9 rounded-full flex items-center justify-center transition"
@@ -1583,7 +1766,7 @@ export default function VerdeGuida() {
         />
       )}
 
-      {showTour && <TourModal onClose={() => setShowTour(false)} />}
+      {showTour && <TourModal onClose={handleCloseTour} />}
 
       {showSettings && (
         <SettingsModal
@@ -2250,6 +2433,11 @@ function AppezzamentoModal({ appezzamento, onSave, onClose }) {
   const [hasSerra, setHasSerra] = useState(appezzamento?.hasSerra || false);
   const [hasIdroponica, setHasIdroponica] = useState(appezzamento?.hasIdroponica || false);
   const [hasRialzato, setHasRialzato] = useState(appezzamento?.hasRialzato || false);
+  // Caratteristiche terreno (tutte opzionali)
+  const [terrenoTipo, setTerrenoTipo] = useState(appezzamento?.terrenoTipo || "");
+  const [terrenoPH, setTerrenoPH] = useState(appezzamento?.terrenoPH || "");
+  const [terrenoDurezza, setTerrenoDurezza] = useState(appezzamento?.terrenoDurezza || "");
+  const [showGuidaTerreno, setShowGuidaTerreno] = useState(false);
   const [localitaQuery, setLocalitaQuery] = useState(appezzamento?.localita || "");
   const [localitaResults, setLocalitaResults] = useState([]);
   const [localitaSelected, setLocalitaSelected] = useState(appezzamento ? {
@@ -2291,6 +2479,9 @@ function AppezzamentoModal({ appezzamento, onSave, onClose }) {
       hasSerra,
       hasIdroponica,
       hasRialzato,
+      terrenoTipo: terrenoTipo || null,
+      terrenoPH: terrenoPH || null,
+      terrenoDurezza: terrenoDurezza || null,
       localita: localitaSelected?.nome || "",
       lat: localitaSelected?.lat || null,
       lon: localitaSelected?.lon || null,
@@ -2400,16 +2591,149 @@ function AppezzamentoModal({ appezzamento, onSave, onClose }) {
           </div>
         </div>
 
+        {/* ═══ TERRENO (tutti i campi opzionali) ═══ */}
+        <div className="card p-3 mb-4" style={{ background: "var(--c-cream)" }}>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Il tuo terreno</span>
+              <p className="text-[11px] opacity-60 italic mt-0.5">Tutti i campi sono opzionali. Ti aiutiamo a capire come migliorarlo.</p>
+            </div>
+            <button type="button"
+              onClick={() => setShowGuidaTerreno(true)}
+              className="flex items-center gap-1 text-[11px] underline opacity-70 hover:opacity-100 flex-shrink-0"
+              style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--c-olive-dark)" }}>
+              <HelpCircle size={12}/> Come capire?
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+            <label className="block">
+              <span className="text-[10px] uppercase tracking-wider opacity-60 font-bold">Tipo</span>
+              <select value={terrenoTipo} onChange={(e) => setTerrenoTipo(e.target.value)}
+                className="w-full mt-1 px-2 py-2 rounded-lg text-sm"
+                style={{ border: "1.5px solid var(--c-border)", background: "white", fontSize: "14px" }}>
+                <option value="">Non so</option>
+                <option value="argilloso">Argilloso</option>
+                <option value="sabbioso">Sabbioso</option>
+                <option value="limoso">Limoso</option>
+                <option value="calcareo">Calcareo</option>
+                <option value="torboso">Torboso</option>
+                <option value="franco">Franco (misto ideale)</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-[10px] uppercase tracking-wider opacity-60 font-bold">pH</span>
+              <select value={terrenoPH} onChange={(e) => setTerrenoPH(e.target.value)}
+                className="w-full mt-1 px-2 py-2 rounded-lg text-sm"
+                style={{ border: "1.5px solid var(--c-border)", background: "white", fontSize: "14px" }}>
+                <option value="">Non so</option>
+                <option value="acido">Acido (&lt; 6.5)</option>
+                <option value="neutro">Neutro (6.5-7.5)</option>
+                <option value="basico">Basico (&gt; 7.5)</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-[10px] uppercase tracking-wider opacity-60 font-bold">Durezza</span>
+              <select value={terrenoDurezza} onChange={(e) => setTerrenoDurezza(e.target.value)}
+                className="w-full mt-1 px-2 py-2 rounded-lg text-sm"
+                style={{ border: "1.5px solid var(--c-border)", background: "white", fontSize: "14px" }}>
+                <option value="">Non so</option>
+                <option value="sciolto">Sciolto / drenante</option>
+                <option value="medio">Medio</option>
+                <option value="compatto">Compatto / duro</option>
+              </select>
+            </label>
+          </div>
+
+          {/* Consigli live */}
+          {(terrenoTipo || terrenoPH || terrenoDurezza) && (() => {
+            const consigli = getConsigliTerreno({ terrenoTipo, terrenoPH, terrenoDurezza });
+            if (consigli.length === 0) return null;
+            return (
+              <div className="mt-3 space-y-2">
+                <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--c-olive-dark)" }}>💡 Consigli per il tuo terreno</p>
+                {consigli.map((c, i) => (
+                  <div key={i} className="p-2 rounded" style={{ background: "white", borderLeft: "3px solid var(--c-olive)" }}>
+                    <p className="serif font-bold text-sm">{c.titolo}</p>
+                    <p className="text-[11px] italic opacity-70 mt-0.5">{c.problema}</p>
+                    <ul className="text-[11px] mt-1.5 space-y-0.5">
+                      {c.rimedi.map((r, j) => <li key={j}>• {r}</li>)}
+                    </ul>
+                    <p className="text-[10px] mt-1.5 opacity-70">
+                      <b>Cerca in giardineria:</b> {c.prodotti.join(", ")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Guida terreno modal */}
+        {showGuidaTerreno && (
+          <ModalPortal>
+            <div style={{ position: "fixed", inset: 0, background: "rgba(42,36,24,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }}
+              onClick={() => setShowGuidaTerreno(false)}>
+              <div className="card" style={{ maxWidth: "500px", width: "100%", background: "var(--c-bg)", maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="serif italic text-[10px] uppercase tracking-wider opacity-60">— guida —</p>
+                    <h3 className="serif font-bold text-2xl">Come capire che terreno ho?</h3>
+                  </div>
+                  <button onClick={() => setShowGuidaTerreno(false)} className="opacity-60 hover:opacity-100"><X size={18}/></button>
+                </div>
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <p className="serif font-bold mb-1">🫴 Prova della palla</p>
+                    <p className="text-xs opacity-80">Prendi una manciata di terra umida, stringila in pugno. Se forma <b>una palla compatta</b> che resta unita = argilloso. Se si <b>sbriciola subito</b> = sabbioso. Se forma palla ma si rompe al tocco = limoso/franco.</p>
+                  </div>
+                  <div>
+                    <p className="serif font-bold mb-1">🫙 Prova della bottiglia</p>
+                    <p className="text-xs opacity-80">Riempi una bottiglia trasparente per metà con terra, il resto acqua. Agita bene, lascia riposare 24 ore. Vedrai strati: sabbia (in basso), limo (in mezzo), argilla (sopra). Se prevale lo strato basso = sabbioso. Quello alto = argilloso.</p>
+                  </div>
+                  <div>
+                    <p className="serif font-bold mb-1">🧪 Test pH con striscette</p>
+                    <p className="text-xs opacity-80">Compra in giardineria delle strisce pH (costano 5-10€). Metti un po' di terra in un bicchiere con acqua distillata, mescola, immergi la striscia. Verde = neutro, rosso/arancio = acido, blu = basico.</p>
+                  </div>
+                  <div>
+                    <p className="serif font-bold mb-1">💧 Come capire la durezza</p>
+                    <p className="text-xs opacity-80">Prova a piantare una vanga: se entra facilmente e tira su zolla morbida = sciolto. Se serve forza ma va = medio. Se rimbalza o si pianta a fatica = compatto.</p>
+                  </div>
+                  <div>
+                    <p className="serif font-bold mb-1">🌱 Indizi visivi</p>
+                    <ul className="text-xs opacity-80 space-y-0.5 mt-1">
+                      <li>• <b>Muschio abbondante</b> = terreno acido e/o umido</li>
+                      <li>• <b>Crepe profonde</b> quando asciutto = argilloso</li>
+                      <li>• <b>Scorre via l'acqua</b> subito = sabbioso</li>
+                      <li>• <b>Foglie gialle su agrumi</b> = probabilmente basico</li>
+                    </ul>
+                  </div>
+                  <div className="card p-2" style={{ background: "var(--c-cream)" }}>
+                    <p className="text-[11px] italic opacity-80">
+                      💡 <b>Nessuna pressione:</b> se non sei sicuro, lascia tutto vuoto. L'app funziona bene anche senza questi dettagli.
+                    </p>
+                  </div>
+                </div>
+                <button className="btn-primary w-full mt-4 justify-center" onClick={() => setShowGuidaTerreno(false)}>
+                  Ho capito
+                </button>
+              </div>
+            </div>
+          </ModalPortal>
+        )}
+
         <div className="mb-4">
           <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Località</span>
           <p className="text-[11px] opacity-60 italic mt-0.5 mb-1">Serve a calcolare il microclima (shift stagionale)</p>
-          <div className="flex gap-2 mt-1">
+          <div className="flex flex-col sm:flex-row gap-2 mt-1">
             <input type="text" value={localitaQuery}
               onChange={(e) => { setLocalitaQuery(e.target.value); setLocalitaSelected(null); }}
               onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), cercaLocalita())}
               placeholder="Es: Piana degli Albanesi"
               className="flex-1 px-3 py-2 rounded-lg" style={{ border: "1.5px solid var(--c-border)", background: "var(--c-cream)" }}/>
-            <button type="button" onClick={cercaLocalita} disabled={searching} className="btn-ghost">
+            <button type="button" onClick={cercaLocalita} disabled={searching} className="btn-ghost justify-center">
               {searching ? "..." : "Cerca"}
             </button>
           </div>
@@ -2469,6 +2793,13 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
   const isVaso = selectedApp && IN_VASO.has(selectedApp.tipo);
   const notFit = isVaso && !plant.vasoOk;
 
+  // ===== AGRUMI IN MONTAGNA =====
+  const isAgrume = AGRUMI.has(plant.id);
+  const altitudineApp = selectedApp?.altitudine || 0;
+  const hasSerra = selectedApp && (selectedApp.hasSerra || selectedApp.tipo === "serra");
+  const agrumiMontagnaProblema = isAgrume && altitudineApp >= ALTITUDINE_MONTANA && !hasSerra;
+  const [confirmAgrumiMontagna, setConfirmAgrumiMontagna] = useState(false);
+
   // ===== FUORI STAGIONE =====
   const mese = currentMonth + 1;
   const mesiValidi = new Set([...seminaShifted, ...trapiantoShifted]);
@@ -2483,8 +2814,7 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
       }))
     : 0;
   const fuoriStagione = haPeriodi && !isInSeason;
-  // appezzamento con serra ammorbidisce un po' il warning, idroponica lo annulla
-  const hasSerra = selectedApp?.hasSerra || selectedApp?.tipo === "serra";
+  // idroponica annulla il problema fuori stagione
   const hasIdroponica = selectedApp?.hasIdroponica;
   const fuoriStagioneEffettivo = fuoriStagione && !hasIdroponica;
 
@@ -2559,6 +2889,37 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
                     </span>
                   </label>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== WARNING AGRUMI MONTAGNA ===== */}
+        {agrumiMontagnaProblema && (
+          <div className="card mb-4" style={{
+            background: "#fff3cd",
+            borderColor: "#d4a73b",
+            borderWidth: "2px"
+          }}>
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={24} style={{ color: "#b45309", flexShrink: 0 }} className="mt-0.5"/>
+              <div className="flex-1">
+                <p className="serif font-bold text-base mb-1" style={{ color: "#b45309" }}>
+                  🌡️ Agrumi in zona montana
+                </p>
+                <p className="text-xs leading-relaxed opacity-90 mb-2">
+                  Il tuo appezzamento è a <b>{altitudineApp} m</b> di altitudine. Gli agrumi come <b>{plant.nome.toLowerCase()}</b> soffrono molto in montagna: temono il gelo sotto i -3°C e le grandi escursioni termiche giorno/notte rallentano la maturazione e provocano cadute dei frutti.
+                </p>
+                <p className="text-xs leading-relaxed mb-2" style={{ color: "#b45309" }}>
+                  💡 <b>Ti consigliamo una serra</b> o la coltivazione in vaso da riparare in inverno. Valuta se hai modo di proteggere la pianta da ottobre ad aprile.
+                </p>
+                <label className="flex items-start gap-2 mt-3 p-2 rounded cursor-pointer" style={{ background: "rgba(180,83,9,0.1)" }}>
+                  <input type="checkbox" checked={confirmAgrumiMontagna} onChange={(e) => setConfirmAgrumiMontagna(e.target.checked)}
+                    className="mt-0.5 flex-shrink-0"/>
+                  <span className="text-[11px] serif italic opacity-80">
+                    Sono consapevole del rischio e ho modo di proteggere la pianta. Procedo comunque.
+                  </span>
+                </label>
               </div>
             </div>
           </div>
@@ -2667,9 +3028,9 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
           <button className="btn-ghost flex-1" onClick={onClose}>Annulla</button>
           <button className="btn-primary flex-1 justify-center"
             onClick={() => onAdd(plant, quantita, note, appezzamentoId, annoImpianto ? parseInt(annoImpianto) : null, plant.categoria === "orto" ? dataPiantagione : null)}
-            disabled={fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason}
-            style={fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason ? { opacity: 0.5, cursor: "not-allowed" } : {}}>
-            <Plus size={14}/> {fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason ? "Fuori stagione" : "Aggiungi"}
+            disabled={(fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason) || (agrumiMontagnaProblema && !confirmAgrumiMontagna)}
+            style={((fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason) || (agrumiMontagnaProblema && !confirmAgrumiMontagna)) ? { opacity: 0.5, cursor: "not-allowed" } : {}}>
+            <Plus size={14}/> {fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason ? "Fuori stagione" : (agrumiMontagnaProblema && !confirmAgrumiMontagna) ? "Conferma il rischio" : "Aggiungi"}
           </button>
         </div>
       </div>
@@ -2689,6 +3050,7 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
   const [dataPiantagione, setDataPiantagione] = useState(userPlant.dataPiantagione || "");
   const [problemi, setProblemi] = useState(userPlant.problemi || []);
   const [showProblemaForm, setShowProblemaForm] = useState(false);
+  const [problemaRisoltoFlash, setProblemaRisoltoFlash] = useState(null);
   if (!plant) return null;
 
   const selectedApp = appezzamenti.find(a => a.id === appezzamentoId);
@@ -2707,7 +3069,14 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
     setShowProblemaForm(false);
   };
   const toggleRisolto = (id) => {
+    const current = problemi.find(p => p.id === id);
+    const willResolve = current && !current.risolto;
     setProblemi(problemi.map(p => p.id === id ? { ...p, risolto: !p.risolto } : p));
+    // flash celebrativo quando si risolve un problema
+    if (willResolve) {
+      setProblemaRisoltoFlash(id);
+      setTimeout(() => setProblemaRisoltoFlash(null), 2800);
+    }
   };
   const removeProblema = (id) => {
     setProblemi(problemi.filter(p => p.id !== id));
@@ -2917,6 +3286,29 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
                         <p className="text-[10px] uppercase tracking-wider font-bold opacity-60 mb-1">💡 Rimedi consigliati</p>
                         <div className="text-xs whitespace-pre-line">{p.rimedi}</div>
                       </div>
+                    )}
+
+                    {/* flash celebrativo */}
+                    {problemaRisoltoFlash === p.id && (
+                      <div className="mt-2 p-2 rounded text-center fade-up"
+                        style={{ background: "var(--c-olive)", color: "var(--c-cream)" }}>
+                        <p className="serif font-bold text-sm">🎉 Ben fatto!</p>
+                        <p className="text-[11px] opacity-90">La tua pianta ringrazia.</p>
+                      </div>
+                    )}
+
+                    {/* Bottone azione risoluzione */}
+                    {!p.risolto ? (
+                      <button onClick={() => toggleRisolto(p.id)}
+                        className="mt-3 btn-primary w-full justify-center text-xs"
+                        style={{ background: "var(--c-olive)", color: "var(--c-cream)" }}>
+                        <CheckCircle2 size={13}/> Segna come risolto
+                      </button>
+                    ) : (
+                      <button onClick={() => toggleRisolto(p.id)}
+                        className="mt-3 btn-ghost w-full justify-center text-xs">
+                        ↩️ Riapri problema
+                      </button>
                     )}
                   </div>
                 </div>
@@ -3144,6 +3536,336 @@ function TecnicheView() {
 }
 
 // ============================================================
+// ModalPortal — render di modali fuori dal tree via createPortal
+// Così gli z-index non vengono schiacciati da contesti di stacking locali
+// ============================================================
+function ModalPortal({ children }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(children, document.body);
+}
+
+// ============================================================
+// SVG ILLUSTRATIVI — diagrammi tecnici per ogni innesto
+// ============================================================
+// Palette condivisa:
+//   bark (corteccia marrone), wood (legno chiaro), cambio (strato verde vitale),
+//   leaf (fogliame), string (rafia), num (numeri rossi dei passaggi)
+const INN_SVG_COL = {
+  bark: "#6b4423",
+  barkLight: "#8a6239",
+  wood: "#d4ac5e",
+  cambio: "#7a8c3c",
+  leaf: "#5a7028",
+  leafLight: "#7a8c3c",
+  string: "#c9b88b",
+  stringDark: "#a0845a",
+  num: "#c83737",
+  ink: "#2a2418",
+  bg: "transparent",
+};
+
+const NumBadge = ({ x, y, n }) => (
+  <g>
+    <circle cx={x} cy={y} r="11" fill={INN_SVG_COL.num} stroke="#fff" strokeWidth="2"/>
+    <text x={x} y={y + 4} textAnchor="middle" fontSize="13" fontWeight="bold" fill="#fff">{n}</text>
+  </g>
+);
+
+function InnestoSVG({ id }) {
+  const C = INN_SVG_COL;
+  const common = { width: "100%", height: "auto", style: { maxHeight: 260 } };
+
+  // ─────────── SCUDETTO (gemma) ───────────
+  if (id === "scudetto") {
+    return (
+      <svg viewBox="0 0 500 260" {...common} xmlns="http://www.w3.org/2000/svg">
+        {/* Step 1: portainnesto con taglio a T */}
+        <text x="70" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Portainnesto</text>
+        <rect x="50" y="30" width="40" height="200" fill={C.bark} rx="3"/>
+        <rect x="56" y="36" width="28" height="188" fill={C.wood}/>
+        {/* taglio a T sollevato */}
+        <path d="M70 80 L70 160 M55 80 L85 80" stroke={C.ink} strokeWidth="2" fill="none"/>
+        <path d="M56 82 Q64 95 62 140 L58 140 L56 82 Z" fill={C.barkLight} stroke={C.ink} strokeWidth="0.5"/>
+        <path d="M84 82 Q76 95 78 140 L82 140 L84 82 Z" fill={C.barkLight} stroke={C.ink} strokeWidth="0.5"/>
+        <NumBadge x={70} y={55} n={1}/>
+
+        {/* Step 2: scudetto con gemma */}
+        <text x="200" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Scudetto (marza)</text>
+        <path d="M185 60 Q200 55 215 60 L215 130 Q200 160 185 130 Z" fill={C.barkLight} stroke={C.ink} strokeWidth="1.2"/>
+        {/* gemma */}
+        <ellipse cx="200" cy="95" rx="5" ry="7" fill={C.leaf}/>
+        <ellipse cx="200" cy="92" rx="3" ry="4" fill={C.leafLight}/>
+        {/* strato cambio verde */}
+        <path d="M189 62 Q200 57 211 62 L211 128 Q200 155 189 128 Z" fill="none" stroke={C.cambio} strokeWidth="1.5" strokeDasharray="2,2"/>
+        <NumBadge x={200} y={55} n={2}/>
+
+        {/* Step 3: inserito e legato */}
+        <text x="350" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Inserito e legato</text>
+        <rect x="330" y="30" width="40" height="200" fill={C.bark} rx="3"/>
+        <rect x="336" y="36" width="28" height="188" fill={C.wood}/>
+        {/* scudetto inserito */}
+        <path d="M338 85 Q350 80 362 85 L362 145 Q350 165 338 145 Z" fill={C.barkLight} stroke={C.ink} strokeWidth="1"/>
+        <ellipse cx="350" cy="115" rx="4" ry="6" fill={C.leaf}/>
+        {/* rafia */}
+        <path d="M322 95 Q350 93 378 95" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M322 108 Q350 106 378 108" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M322 135 Q350 133 378 135" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M322 148 Q350 146 378 148" stroke={C.string} strokeWidth="3" fill="none"/>
+        <text x="350" y="118" textAnchor="middle" fontSize="8" fill="#fff" fontWeight="bold">gemma</text>
+        <NumBadge x={350} y={55} n={3}/>
+
+        {/* freccia */}
+        <path d="M100 130 L130 130 M125 125 L130 130 L125 135" stroke={C.ink} strokeWidth="1.5" fill="none"/>
+        <path d="M240 130 L290 130 M285 125 L290 130 L285 135" stroke={C.ink} strokeWidth="1.5" fill="none"/>
+
+        <text x="435" y="60" fontSize="9" fill={C.ink}>LEGENDA</text>
+        <rect x="430" y="70" width="12" height="8" fill={C.bark}/><text x="448" y="77" fontSize="8" fill={C.ink}>corteccia</text>
+        <rect x="430" y="85" width="12" height="8" fill={C.wood}/><text x="448" y="92" fontSize="8" fill={C.ink}>legno</text>
+        <rect x="430" y="100" width="12" height="2" fill={C.cambio}/><text x="448" y="105" fontSize="8" fill={C.ink}>cambio</text>
+        <rect x="430" y="115" width="12" height="3" fill={C.string}/><text x="448" y="121" fontSize="8" fill={C.ink}>rafia</text>
+      </svg>
+    );
+  }
+
+  // ─────────── SPACCO ───────────
+  if (id === "spacco") {
+    return (
+      <svg viewBox="0 0 500 260" {...common} xmlns="http://www.w3.org/2000/svg">
+        {/* Step 1: portainnesto tagliato netto */}
+        <text x="80" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>1. Taglio netto</text>
+        <rect x="62" y="30" width="36" height="200" fill={C.bark} rx="3"/>
+        <rect x="68" y="36" width="24" height="194" fill={C.wood}/>
+        <line x1="54" y1="36" x2="106" y2="36" stroke={C.ink} strokeWidth="2"/>
+        <NumBadge x={80} y={55} n={1}/>
+
+        {/* Step 2: spacco verticale */}
+        <text x="200" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>2. Spacco</text>
+        <rect x="182" y="30" width="36" height="200" fill={C.bark} rx="3"/>
+        <rect x="188" y="36" width="24" height="194" fill={C.wood}/>
+        <line x1="200" y1="36" x2="200" y2="90" stroke={C.ink} strokeWidth="2.5"/>
+        <path d="M196 36 L200 40 L204 36" fill={C.ink}/>
+        <NumBadge x={200} y={55} n={2}/>
+
+        {/* Step 3: marze a cuneo inserite */}
+        <text x="320" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>3. Marze inserite</text>
+        <rect x="302" y="45" width="36" height="185" fill={C.bark} rx="3"/>
+        <rect x="308" y="51" width="24" height="179" fill={C.wood}/>
+        {/* marza sinistra */}
+        <path d="M300 10 L304 42 L302 42 Z" fill={C.wood} stroke={C.ink} strokeWidth="0.8"/>
+        <path d="M295 10 L300 10 L304 42 L300 55 Z" fill={C.bark} stroke={C.ink} strokeWidth="0.8"/>
+        <ellipse cx="298" cy="20" rx="2" ry="3" fill={C.leaf}/>
+        <ellipse cx="298" cy="28" rx="2" ry="3" fill={C.leaf}/>
+        {/* marza destra */}
+        <path d="M340 10 L336 42 L338 42 Z" fill={C.wood} stroke={C.ink} strokeWidth="0.8"/>
+        <path d="M345 10 L340 10 L336 42 L340 55 Z" fill={C.bark} stroke={C.ink} strokeWidth="0.8"/>
+        <ellipse cx="342" cy="20" rx="2" ry="3" fill={C.leaf}/>
+        <ellipse cx="342" cy="28" rx="2" ry="3" fill={C.leaf}/>
+        <NumBadge x={320} y={65} n={3}/>
+
+        {/* Step 4: legato e sigillato */}
+        <text x="440" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>4. Legato + mastice</text>
+        <rect x="422" y="45" width="36" height="185" fill={C.bark} rx="3"/>
+        <rect x="428" y="51" width="24" height="179" fill={C.wood}/>
+        <path d="M420 10 L424 42 L422 42 Z" fill={C.wood}/>
+        <path d="M415 10 L420 10 L424 42 L420 52 Z" fill={C.bark}/>
+        <ellipse cx="418" cy="20" rx="2" ry="3" fill={C.leaf}/>
+        <path d="M460 10 L456 42 L458 42 Z" fill={C.wood}/>
+        <path d="M465 10 L460 10 L456 42 L460 52 Z" fill={C.bark}/>
+        <ellipse cx="462" cy="20" rx="2" ry="3" fill={C.leaf}/>
+        {/* mastice scuro in cima */}
+        <ellipse cx="440" cy="48" rx="26" ry="5" fill={C.ink} opacity="0.7"/>
+        {/* rafia */}
+        <path d="M418 56 Q440 54 462 56" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M418 70 Q440 68 462 70" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M418 84 Q440 82 462 84" stroke={C.string} strokeWidth="3" fill="none"/>
+        <NumBadge x={440} y={65} n={4}/>
+
+        {/* frecce */}
+        <path d="M110 130 L170 130 M165 125 L170 130 L165 135" stroke={C.ink} strokeWidth="1.2" fill="none"/>
+        <path d="M230 130 L290 130 M285 125 L290 130 L285 135" stroke={C.ink} strokeWidth="1.2" fill="none"/>
+        <path d="M350 130 L410 130 M405 125 L410 130 L405 135" stroke={C.ink} strokeWidth="1.2" fill="none"/>
+      </svg>
+    );
+  }
+
+  // ─────────── CORONA ───────────
+  if (id === "corona") {
+    return (
+      <svg viewBox="0 0 500 260" {...common} xmlns="http://www.w3.org/2000/svg">
+        {/* Vista dall'alto: tronco grosso con 4 marze inserite a corona */}
+        <text x="120" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Vista dall'alto</text>
+        <circle cx="120" cy="130" r="70" fill={C.bark} stroke={C.ink} strokeWidth="1.5"/>
+        <circle cx="120" cy="130" r="55" fill={C.wood}/>
+        <circle cx="120" cy="130" r="55" fill="none" stroke={C.cambio} strokeWidth="1.5"/>
+        {/* 4 marze inserite tra corteccia e legno, disposte a croce */}
+        {[
+          [120, 60, 0],   // nord
+          [190, 130, 90], // est
+          [120, 200, 180],// sud
+          [50, 130, 270], // ovest
+        ].map(([mx, my, rot], i) => (
+          <g key={i} transform={`rotate(${rot} ${mx} ${my})`}>
+            <rect x={mx - 4} y={my - 8} width="8" height="16" fill={C.wood} stroke={C.ink} strokeWidth="0.8"/>
+            <rect x={mx - 5} y={my - 10} width="10" height="4" fill={C.bark} stroke={C.ink} strokeWidth="0.8"/>
+            <ellipse cx={mx - 2} cy={my - 13} rx="1.5" ry="2" fill={C.leaf}/>
+            <ellipse cx={mx + 2} cy={my - 13} rx="1.5" ry="2" fill={C.leaf}/>
+          </g>
+        ))}
+        <NumBadge x={120} y={80} n={1}/>
+
+        {/* Laterale dettaglio inserzione */}
+        <text x="360" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Dettaglio inserzione</text>
+        {/* tronco laterale tagliato */}
+        <rect x="300" y="100" width="120" height="130" fill={C.bark}/>
+        <rect x="308" y="108" width="104" height="122" fill={C.wood}/>
+        {/* taglio verticale sollevato */}
+        <path d="M348 108 L348 160" stroke={C.ink} strokeWidth="2"/>
+        {/* lembo corteccia sollevato */}
+        <path d="M348 108 Q336 115 336 155 L348 160 Z" fill={C.barkLight} stroke={C.ink} strokeWidth="1"/>
+        {/* marza inserita */}
+        <rect x="340" y="75" width="10" height="35" fill={C.wood} stroke={C.ink} strokeWidth="0.8"/>
+        <rect x="338" y="60" width="14" height="20" fill={C.bark} stroke={C.ink} strokeWidth="0.8"/>
+        <ellipse cx="342" cy="68" rx="2" ry="3" fill={C.leaf}/>
+        <ellipse cx="348" cy="68" rx="2" ry="3" fill={C.leaf}/>
+        <NumBadge x={380} y={90} n={2}/>
+        <text x="380" y="170" fontSize="9" fill={C.ink}>Marza inserita tra</text>
+        <text x="380" y="182" fontSize="9" fill={C.ink}>corteccia e legno</text>
+
+        {/* Nota */}
+        <text x="250" y="252" textAnchor="middle" fontSize="9" fill={C.ink} fontStyle="italic">
+          Tipicamente 3-4 marze disposte a corona sul portainnesto grande (&gt;5 cm di diametro)
+        </text>
+      </svg>
+    );
+  }
+
+  // ─────────── TRIANGOLO ───────────
+  if (id === "triangolo") {
+    return (
+      <svg viewBox="0 0 500 260" {...common} xmlns="http://www.w3.org/2000/svg">
+        {/* Step 1: incavo triangolare nel portainnesto */}
+        <text x="100" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>1. Incavo triangolare</text>
+        <rect x="80" y="30" width="40" height="200" fill={C.bark} rx="3"/>
+        <rect x="86" y="36" width="28" height="194" fill={C.wood}/>
+        {/* incavo a triangolo sul lato destro */}
+        <path d="M120 90 L100 110 L120 130 Z" fill={C.bg} stroke={C.ink} strokeWidth="1.5"/>
+        <path d="M120 90 L100 110 L120 130" stroke={C.ink} strokeWidth="0.5" strokeDasharray="1,1" fill="#fff"/>
+        <NumBadge x={100} y={55} n={1}/>
+
+        {/* Step 2: marza a triangolo complementare */}
+        <text x="240" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>2. Marza sagomata</text>
+        <path d="M230 60 L230 95 L210 115 L230 135 L230 170 L245 170 L245 60 Z" fill={C.wood} stroke={C.ink} strokeWidth="1"/>
+        <path d="M245 60 L230 60 L230 85 M245 170 L230 170 L230 140" fill="none" stroke={C.bark} strokeWidth="3"/>
+        <ellipse cx="237" cy="72" rx="2" ry="3" fill={C.leaf}/>
+        <ellipse cx="237" cy="82" rx="2" ry="3" fill={C.leaf}/>
+        <NumBadge x={225} y={45} n={2}/>
+
+        {/* Step 3: inserita */}
+        <text x="380" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>3. Inserita perfetta</text>
+        <rect x="360" y="30" width="40" height="200" fill={C.bark} rx="3"/>
+        <rect x="366" y="36" width="28" height="194" fill={C.wood}/>
+        {/* triangolo inserito */}
+        <path d="M400 90 L380 110 L400 130 Z" fill={C.wood} stroke={C.ink} strokeWidth="1"/>
+        <path d="M400 90 L400 70 L420 70 L420 150 L400 150 L400 130" fill={C.bark} stroke={C.ink} strokeWidth="0.8"/>
+        <rect x="403" y="73" width="14" height="74" fill={C.wood}/>
+        <ellipse cx="410" cy="82" rx="2" ry="3" fill={C.leaf}/>
+        <ellipse cx="410" cy="92" rx="2" ry="3" fill={C.leaf}/>
+        {/* rafia */}
+        <path d="M356 100 Q400 98 425 100" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M356 120 Q400 118 425 120" stroke={C.string} strokeWidth="3" fill="none"/>
+        <NumBadge x={380} y={55} n={3}/>
+
+        <path d="M130 130 L200 130 M195 125 L200 130 L195 135" stroke={C.ink} strokeWidth="1.2" fill="none"/>
+        <path d="M280 130 L340 130 M335 125 L340 130 L335 135" stroke={C.ink} strokeWidth="1.2" fill="none"/>
+      </svg>
+    );
+  }
+
+  // ─────────── PONTE ───────────
+  if (id === "ponte") {
+    return (
+      <svg viewBox="0 0 500 260" {...common} xmlns="http://www.w3.org/2000/svg">
+        <text x="250" y="18" textAnchor="middle" fontSize="11" fill={C.ink} fontWeight="bold">Ripara corteccia danneggiata</text>
+
+        {/* Tronco con ferita */}
+        <rect x="200" y="30" width="100" height="210" fill={C.bark} rx="3"/>
+        <rect x="215" y="45" width="70" height="180" fill={C.wood}/>
+        {/* zona danneggiata */}
+        <path d="M200 105 Q220 100 300 105 L300 165 Q280 170 200 165 Z" fill={C.wood} stroke={C.ink} strokeWidth="1.2"/>
+        <text x="250" y="138" textAnchor="middle" fontSize="9" fill={C.ink} fontStyle="italic">ferita / scortecciato</text>
+        <NumBadge x={175} y={135} n={1}/>
+
+        {/* marze a ponte — 3 bastoncini */}
+        {[225, 250, 275].map((mx, i) => (
+          <g key={i}>
+            <rect x={mx - 3} y="95" width="6" height="80" fill={C.wood} stroke={C.ink} strokeWidth="0.8"/>
+            {/* estremità inserite sopra e sotto la ferita */}
+            <path d={`M${mx - 4} 95 L${mx + 4} 95 L${mx + 3} 100 L${mx - 3} 100 Z`} fill={C.bark}/>
+            <path d={`M${mx - 4} 175 L${mx + 4} 175 L${mx + 3} 170 L${mx - 3} 170 Z`} fill={C.bark}/>
+            <ellipse cx={mx} cy="125" rx="1.5" ry="2" fill={C.leaf}/>
+            <ellipse cx={mx} cy="145" rx="1.5" ry="2" fill={C.leaf}/>
+          </g>
+        ))}
+        <NumBadge x={325} y={135} n={2}/>
+
+        {/* rafia in cima e sotto */}
+        <path d="M195 93 Q250 91 305 93" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M195 178 Q250 176 305 178" stroke={C.string} strokeWidth="3" fill="none"/>
+
+        <text x="250" y="252" textAnchor="middle" fontSize="9" fill={C.ink} fontStyle="italic">
+          Le marze "a ponte" ripristinano la circolazione della linfa
+        </text>
+      </svg>
+    );
+  }
+
+  // ─────────── GEMMA DORMIENTE ───────────
+  if (id === "gemma-dormiente") {
+    return (
+      <svg viewBox="0 0 500 260" {...common} xmlns="http://www.w3.org/2000/svg">
+        {/* Step 1: agosto, gemma inserita */}
+        <text x="100" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Agosto: gemma inserita</text>
+        <rect x="82" y="30" width="36" height="200" fill={C.bark} rx="3"/>
+        <rect x="88" y="36" width="24" height="194" fill={C.wood}/>
+        {/* scudetto con gemma */}
+        <path d="M90 90 Q100 85 110 90 L110 140 Q100 160 90 140 Z" fill={C.barkLight} stroke={C.ink} strokeWidth="1"/>
+        <ellipse cx="100" cy="115" rx="4" ry="6" fill={C.leaf}/>
+        {/* rafia */}
+        <path d="M78 100 Q100 98 122 100" stroke={C.string} strokeWidth="3" fill="none"/>
+        <path d="M78 130 Q100 128 122 130" stroke={C.string} strokeWidth="3" fill="none"/>
+        <NumBadge x={100} y={55} n={1}/>
+
+        {/* Step 2: inverno, dormiente */}
+        <text x="250" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Inverno: dormiente</text>
+        <rect x="232" y="30" width="36" height="200" fill={C.bark} rx="3"/>
+        <rect x="238" y="36" width="24" height="194" fill={C.wood}/>
+        <ellipse cx="250" cy="115" rx="4" ry="5" fill={C.ink} opacity="0.5"/>
+        <text x="280" y="118" fontSize="9" fill={C.ink} fontStyle="italic">gemma non parte</text>
+        <NumBadge x={250} y={55} n={2}/>
+
+        {/* Step 3: primavera, taglio e nuovo germoglio */}
+        <text x="400" y="18" textAnchor="middle" fontSize="10" fill={C.ink}>Marzo: taglio + germoglio</text>
+        <rect x="382" y="80" width="36" height="150" fill={C.bark} rx="3"/>
+        <rect x="388" y="86" width="24" height="144" fill={C.wood}/>
+        {/* taglio appena sopra l'innesto */}
+        <line x1="374" y1="80" x2="426" y2="80" stroke={C.ink} strokeWidth="2"/>
+        {/* germoglio nuovo che parte */}
+        <path d="M400 90 L400 55 Q402 40 395 30" stroke={C.leaf} strokeWidth="3" fill="none"/>
+        <ellipse cx="395" cy="45" rx="4" ry="7" fill={C.leafLight}/>
+        <ellipse cx="402" cy="32" rx="3" ry="5" fill={C.leafLight}/>
+        <ellipse cx="390" cy="30" rx="3" ry="5" fill={C.leafLight}/>
+        <NumBadge x={400} y={115} n={3}/>
+
+        <path d="M130 130 L210 130 M205 125 L210 130 L205 135" stroke={C.ink} strokeWidth="1.2" fill="none"/>
+        <path d="M280 130 L360 130 M355 125 L360 130 L355 135" stroke={C.ink} strokeWidth="1.2" fill="none"/>
+      </svg>
+    );
+  }
+
+  return null;
+}
+
+// ============================================================
 // VIEW: INNESTI — tecniche di innesto per frutteto
 // ============================================================
 function InnestiView() {
@@ -3155,8 +3877,51 @@ function InnestiView() {
         <Scissors size={32} style={{ color: "var(--c-terra)" }}/>
         <h2 className="display text-4xl">Innesti</h2>
       </div>
-      <p className="serif italic opacity-70 mb-8 max-w-2xl">
+      <p className="serif italic opacity-70 mb-6 max-w-2xl">
         L'arte antica di unire due piante in una. Serve a propagare varietà pregiate, rigenerare alberi adulti o salvare piante danneggiate.
+      </p>
+
+      {/* SEZIONE NECESSARIO — sempre visibile prima delle tecniche */}
+      <div className="card mb-6" style={{ background: "var(--c-cream)", borderLeft: "4px solid var(--c-ochre)" }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Lightbulb size={20} style={{ color: "var(--c-ochre)" }}/>
+          <h3 className="serif font-bold text-xl">Prima di iniziare: cosa ti serve</h3>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold mb-1">Attrezzi</p>
+            <ul className="space-y-1 text-xs">
+              <li>🔪 Coltello da innesto (o lama molto affilata)</li>
+              <li>✂️ Forbici da potatura</li>
+              <li>🪓 Roncola o scalpello (per lo spacco)</li>
+              <li>🎗️ Rafia elastica o nastro da innesti</li>
+              <li>🍯 Mastice cicatrizzante</li>
+              <li>🏷️ Etichette per identificare varietà</li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold mb-1">Materiale vegetale</p>
+            <ul className="space-y-1 text-xs">
+              <li>🌳 <b>Portainnesto</b>: pianta ricevente sana, senza malattie</li>
+              <li>🌿 <b>Marze</b>: rametti di 1 anno, raccolti in riposo vegetativo (Dicembre-Gennaio) e conservati al fresco e umido</li>
+              <li>🌱 Compatibilità botanica: pero su pero/cotogno, melo su melo, drupacee tra loro...</li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold mb-1">Condizioni ideali</p>
+            <ul className="space-y-1 text-xs">
+              <li>☁️ Giornata nuvolosa, non piovosa</li>
+              <li>🌡️ Temperatura tra 10 e 25°C</li>
+              <li>💧 Pianta ricevente ben irrigata nei giorni precedenti</li>
+              <li>🧴 Lame sterilizzate con alcool tra un innesto e l'altro</li>
+              <li>⚡ Velocità: meno il cambio è esposto all'aria, meglio attecchisce</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <p className="serif italic opacity-70 mb-4 text-sm">
+        👇 Tocca una tecnica per vedere i passaggi in dettaglio con illustrazione tecnica.
       </p>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -3181,6 +3946,11 @@ function InnestiView() {
 
               {isOpen && (
                 <div className="mt-4 pt-4 space-y-3" style={{ borderTop: "1px solid var(--c-border)" }}>
+                  {/* ILLUSTRAZIONE */}
+                  <div className="card p-2" style={{ background: "var(--c-bg)" }}>
+                    <InnestoSVG id={t.id}/>
+                  </div>
+
                   <div>
                     <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold">Come fare</p>
                     <p className="text-xs mt-1 leading-relaxed" style={{ whiteSpace: "pre-line" }}>{t.comeFare}</p>
@@ -3193,7 +3963,7 @@ function InnestiView() {
               )}
 
               {!isOpen && (
-                <p className="text-[10px] mt-3 opacity-40 serif italic">tocca per i passi →</p>
+                <p className="text-[10px] mt-3 opacity-40 serif italic">tocca per illustrazione e passi →</p>
               )}
             </div>
           );
@@ -3364,7 +4134,7 @@ Restituisci SOLO un oggetto JSON valido (no testo prima o dopo, no markdown, no 
   "difficolta": "facile" | "media" | "difficile",
   "spazio": "stringa tipo '30 cm tra piante' o '1 m tra piante'",
   "vasoOk": true o false (se è adatta alla coltivazione in vaso),
-  "resaKg": numero (kg prodotti per pianta in una stagione; 0 per ornamentali o piante non edibili),
+  "resaKg": numero (kg prodotti per pianta in una stagione, STIMA CONSERVATIVA per un orto domestico amatoriale - non per azienda agricola professionale; es. pomodoro ~2.5kg, zucchina ~5kg, olivo adulto ~15kg, melo ~30kg; 0 per ornamentali o piante non edibili),
   "prezzoKg": numero (prezzo medio di mercato al dettaglio in Italia €/kg nel 2025; 0 per ornamentali),
   "giorniMaturazione": numero intero (giorni dalla semina/trapianto alla prima raccolta per orto annuale; 0 per ornamentali e frutteto pluriennale),
   "concimi": [array di 2-4 oggetti {"nome": "nome del concime naturale", "quando": "periodo es. 'al trapianto' o 'ogni 15 gg in fioritura'", "come": "istruzione pratica es. 'una manciata nella buca'"}]
@@ -3486,13 +4256,13 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali r
         <div className="card p-4 mb-4" style={{ background: "var(--c-cream)" }}>
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Nome della pianta</span>
-            <div className="flex gap-2 mt-1">
+            <div className="flex flex-col sm:flex-row gap-2 mt-1">
               <input type="text" value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !searching && (e.preventDefault(), cercaInfo())}
                 placeholder="Es: Lavanda, Geranio, Pisello odoroso..."
                 className="flex-1 px-3 py-2 rounded-lg" style={{ border: "1.5px solid var(--c-border)", background: "white" }}/>
-              <button type="button" onClick={cercaInfo} disabled={!nome.trim() || searching} className="btn-primary">
+              <button type="button" onClick={cercaInfo} disabled={!nome.trim() || searching} className="btn-primary justify-center">
                 {searching ? (
                   <>
                     <span className="animate-spin">⌛</span> Cerco...
@@ -4517,6 +5287,18 @@ function TodaySection({ todayTasks, onOpenSettings, notifEnabled, dayTasksDone, 
         </button>
       </div>
 
+      {/* Messaggio celebrativo: tutti i task completati */}
+      {tasksTot > 0 && tasksFatti === tasksTot && (
+        <div className="p-4 rounded-lg mb-3 fade-up text-center"
+          style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
+          <div className="text-4xl mb-1">🎉</div>
+          <p className="serif font-bold text-lg" style={{ color: "var(--c-olive-dark)" }}>Ben fatto! Hai finito tutto.</p>
+          <p className="text-xs serif italic opacity-70 mt-1">
+            Tutti i lavori di oggi sono completati. Il tuo orto ti ringrazia.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2">
         {todayTasks.map((t) => {
           const meta = OGGI_COLORS[t.tipo];
@@ -5003,7 +5785,8 @@ function RenditaSection({ riepilogo, userPlantsCount }) {
 
       {/* Modal info */}
       {showInfo && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(42,36,24,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }}
+        <ModalPortal>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(42,36,24,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }}
           onClick={() => setShowInfo(false)}>
           <div className="card" style={{ maxWidth: "500px", width: "100%", background: "var(--c-bg)" }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-3">
@@ -5018,7 +5801,7 @@ function RenditaSection({ riepilogo, userPlantsCount }) {
                 Questa sezione ti dà un'idea del <b>valore economico</b> potenziale delle piante che stai coltivando. È calcolato in base a:
               </p>
               <ul className="space-y-1.5 pl-4 list-disc">
-                <li><b>Resa media</b> per pianta (es. un pomodoro adulto produce circa 4 kg/stagione)</li>
+                <li><b>Resa conservativa</b> per pianta in orto domestico (es. un pomodoro ~2.5 kg/stagione, valori prudenti per tenere conto di varietà, cure non perfette, parassiti)</li>
                 <li><b>Prezzi medi al dettaglio</b> in Italia (2024-2025)</li>
                 <li><b>Età della pianta</b> per il frutteto: un olivo di 2 anni non produce, uno di 7+ è in piena produzione</li>
               </ul>
@@ -5036,6 +5819,7 @@ function RenditaSection({ riepilogo, userPlantsCount }) {
             </button>
           </div>
         </div>
+        </ModalPortal>
       )}
     </section>
   );
