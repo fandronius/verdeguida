@@ -1,5 +1,6 @@
-// Netlify Function: proxy verso Google Gemini API
-// La chiave sta in GEMINI_API_KEY delle env vars Netlify
+// Netlify Function: proxy verso Groq API
+// La chiave sta in GROQ_API_KEY delle env vars Netlify
+// Free tier: 14400 richieste/giorno, 30 richieste/minuto
 
 export default async (req, context) => {
   const corsHeaders = {
@@ -19,10 +20,10 @@ export default async (req, context) => {
     });
   }
 
-  const apiKey = Netlify.env.get("GEMINI_API_KEY");
+  const apiKey = Netlify.env.get("GROQ_API_KEY");
   if (!apiKey) {
     return new Response(JSON.stringify({
-      error: { message: "Server non configurato: manca GEMINI_API_KEY su Netlify" }
+      error: { message: "Server non configurato: manca GROQ_API_KEY su Netlify" }
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -43,38 +44,41 @@ export default async (req, context) => {
       });
     }
 
-    const model = "gemini-2.0-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // Modello Groq: Llama 3.3 70B Versatile (gratis, ottima qualità)
+    const model = "llama-3.3-70b-versatile";
 
-    const geminiBody = {
-      contents: [{
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        maxOutputTokens: maxTokens,
-        temperature: 0.7,
-      },
+    const groqBody = {
+      model,
+      messages: [
+        { role: "user", content: prompt }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.7,
     };
 
-    const geminiRes = await fetch(url, {
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(geminiBody),
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(groqBody),
     });
 
-    const textResponse = await geminiRes.text();
+    const textResponse = await groqRes.text();
 
-    if (!geminiRes.ok) {
-      console.error("Gemini API error:", geminiRes.status, textResponse);
+    if (!groqRes.ok) {
+      console.error("Groq API error:", groqRes.status, textResponse);
       return new Response(textResponse, {
-        status: geminiRes.status,
+        status: groqRes.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Estraggo il testo e normalizzo in formato { content: [{ type: "text", text }] }
+    // Estraggo il testo dalla risposta Groq (formato OpenAI-compatible)
+    // e normalizzo in { content: [{ type: "text", text }] }
     const data = JSON.parse(textResponse);
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const text = data.choices?.[0]?.message?.content || "";
 
     return new Response(JSON.stringify({
       content: [{ type: "text", text }]
