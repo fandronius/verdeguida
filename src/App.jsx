@@ -410,7 +410,7 @@ function getConsigliTerreno({ terrenoTipo, terrenoPH, terrenoDurezza }) {
 const AGRUMI = new Set(["limone", "arancio", "mandarino", "pompelmo", "cedro", "lime", "bergamotto", "kumquat", "clementina"]);
 const ALTITUDINE_MONTANA = 500; // m — soglia per considerare "montagna"
 
-const APP_VERSION = "1.7.1";
+const APP_VERSION = "1.7.2";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -4256,13 +4256,16 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali r
         <div className="card p-4 mb-4" style={{ background: "var(--c-cream)" }}>
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Nome della pianta</span>
-            <div className="flex flex-col sm:flex-row gap-2 mt-1">
+            <div className="mt-1 cerca-plant-wrap" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               <input type="text" value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !searching && (e.preventDefault(), cercaInfo())}
                 placeholder="Es: Lavanda, Geranio, Pisello odoroso..."
-                className="flex-1 px-3 py-2 rounded-lg" style={{ border: "1.5px solid var(--c-border)", background: "white" }}/>
-              <button type="button" onClick={cercaInfo} disabled={!nome.trim() || searching} className="btn-primary justify-center">
+                className="px-3 py-2 rounded-lg"
+                style={{ border: "1.5px solid var(--c-border)", background: "white", flex: "1 1 180px", minWidth: 0 }}/>
+              <button type="button" onClick={cercaInfo} disabled={!nome.trim() || searching}
+                className="btn-primary justify-center"
+                style={{ flex: "0 1 auto" }}>
                 {searching ? (
                   <>
                     <span className="animate-spin">⌛</span> Cerco...
@@ -5590,7 +5593,7 @@ function TourModal({ onClose }) {
     {
       emoji: "⏱️",
       title: "Tempi di maturazione",
-      body: "Ogni pianta ha il suo ciclo. Un pomodoro impiega ~80 giorni, una zucchina ~55, una carota ~100. La raccolta ti viene suggerita solo quando la pianta è realmente matura — niente 'raccogli pomodoro' il giorno dopo averlo messo.",
+      body: "Ogni ortaggio ha il proprio ciclo: il pomodoro arriva a maturazione in circa 80 giorni, la zucchina in 55, la carota in 100. L'app tiene conto della data in cui pianti e ti suggerisce la raccolta solo quando la pianta è davvero pronta.",
       tip: "Nella scheda di ogni pianta vedi 'Piantata il X · Matura il Y'. Se hai messo 2 pomodori oggi e uno tra un mese, le date saranno diverse.",
     },
     {
