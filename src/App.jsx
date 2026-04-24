@@ -154,7 +154,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.5.2";
+const APP_VERSION = "1.5.3";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -898,7 +898,8 @@ export default function VerdeGuida() {
       if (mesiIrrigare.includes(mese)) {
         const ir = calcolaIrrigazione(plant, appezz?.tipo, mese);
         const seed = plant.id.charCodeAt(0) % ir.giorni;
-        if ((giornoIdx + seed) % ir.giorni === 0) {
+        const dayOfMonth = oggi.getDate();
+        if (((dayOfMonth - 1 - seed) % ir.giorni) === 0 && (dayOfMonth - 1 - seed) >= 0) {
           tasksRaw.push({ tipo: "irrigazione", plant, appezz, vol: ir.volLabel });
         }
       }
@@ -968,7 +969,8 @@ export default function VerdeGuida() {
           if (mesiI.includes(mese)) {
             const ir = calcolaIrrigazione(plant, appezz?.tipo, mese);
             const seed = plant.id.charCodeAt(0) % ir.giorni;
-            if ((giornoIdx + seed) % ir.giorni === 0) tasksOggi.push(`irriga ${plant.nome}`);
+            const dom = oggi.getDate();
+            if (((dom - 1 - seed) % ir.giorni) === 0 && (dom - 1 - seed) >= 0) tasksOggi.push(`irriga ${plant.nome}`);
           }
         });
 
@@ -2782,10 +2784,12 @@ Restituisci SOLO un oggetto JSON valido (no testo prima o dopo, no markdown, no 
   "sole": "pieno" | "mezz'ombra" | "ombra",
   "difficolta": "facile" | "media" | "difficile",
   "spazio": "stringa tipo '30 cm tra piante' o '1 m tra piante'",
-  "vasoOk": true o false (se è adatta alla coltivazione in vaso)
+  "vasoOk": true o false (se è adatta alla coltivazione in vaso),
+  "resaKg": numero (kg prodotti per pianta in una stagione; 0 per ornamentali o piante non edibili),
+  "prezzoKg": numero (prezzo medio di mercato al dettaglio in Italia €/kg nel 2025; 0 per ornamentali)
 }
 
-Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenza delle piante per il clima mediterraneo italiano.`;
+Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali resaKg e prezzoKg devono essere 0. Usa la tua conoscenza delle piante per il clima mediterraneo italiano.`;
 
     try {
       const res = await fetch(CLAUDE_API_ENDPOINT, {
@@ -2842,6 +2846,8 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
         difficolta: ["facile","media","difficile"].includes(parsed.difficolta) ? parsed.difficolta : "facile",
         spazio: parsed.spazio || "30 cm tra piante",
         vasoOk: typeof parsed.vasoOk === "boolean" ? parsed.vasoOk : true,
+        resaKg: typeof parsed.resaKg === "number" && parsed.resaKg > 0 ? parsed.resaKg : 0,
+        prezzoKg: typeof parsed.prezzoKg === "number" && parsed.prezzoKg > 0 ? parsed.prezzoKg : 0,
       };
 
       setForm(safe);
@@ -2850,7 +2856,6 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
       setSearchError(
         `Ricerca automatica non disponibile${err.message ? `: ${err.message}` : ""}. Controlla i campi qui sotto e modifica quello che serve.`
       );
-      // precompila con valori default così l'utente può editare manualmente
       setForm({
         nome: nome,
         nomeScientifico: "",
@@ -2865,6 +2870,8 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
         difficolta: "facile",
         spazio: "30 cm tra piante",
         vasoOk: true,
+        resaKg: 0,
+        prezzoKg: 0,
       });
     }
     setSearching(false);
@@ -3037,6 +3044,36 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
               <input type="checkbox" checked={form.vasoOk} onChange={(e) => set("vasoOk", e.target.checked)}/>
               <span className="text-sm">Coltivabile in vaso (balcone/terrazzo)</span>
             </label>
+
+            {/* Campi economici: solo se non ornamentale */}
+            {form.categoria !== "ornamentale" && (
+              <div className="card p-3" style={{ background: "var(--c-cream)" }}>
+                <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold mb-2">Resa e valore (facoltativo)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-[11px] opacity-70">Resa kg/pianta</span>
+                    <input type="number" step="0.1" min="0"
+                      value={form.resaKg || ""}
+                      onChange={(e) => set("resaKg", parseFloat(e.target.value) || 0)}
+                      placeholder="Es: 4"
+                      className="w-full mt-0.5 px-2 py-1.5 rounded text-sm"
+                      style={{ border: "1.5px solid var(--c-border)", background: "white" }}/>
+                  </label>
+                  <label className="block">
+                    <span className="text-[11px] opacity-70">Prezzo €/kg</span>
+                    <input type="number" step="0.1" min="0"
+                      value={form.prezzoKg || ""}
+                      onChange={(e) => set("prezzoKg", parseFloat(e.target.value) || 0)}
+                      placeholder="Es: 2.50"
+                      className="w-full mt-0.5 px-2 py-1.5 rounded text-sm"
+                      style={{ border: "1.5px solid var(--c-border)", background: "white" }}/>
+                  </label>
+                </div>
+                <p className="text-[10px] italic opacity-60 mt-2">
+                  Serve a calcolare il valore stimato del raccolto nella home. Lascia 0 se la pianta non è edibile.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -3068,6 +3105,7 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
 // ============================================================
 function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
   const [weekOffset, setWeekOffset] = useState(0); // 0 = questa settimana
+  const [showPast, setShowPast] = useState(false); // mostra giorni passati?
 
   // calcola il lunedì della settimana corrente (+ offset)
   const lunediBase = useMemo(() => {
@@ -3176,17 +3214,18 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
           });
         }
 
-        // IRRIGAZIONE: ogni N giorni in base a calcolaIrrigazione
+        // IRRIGAZIONE: ogni N giorni del mese, allineato al calendario
         const fabbisogno = plant.acqua;
-        const mesiIrrigare = fabbisogno === "alta" ? [5,6,7,8,9]
-          : fabbisogno === "media" ? [6,7,8]
-          : [7,8];
+        const mesiIrrigare = fabbisogno === "alta" ? [4,5,6,7,8,9,10]
+          : fabbisogno === "media" ? [4,5,6,7,8,9]
+          : [6,7,8];
         if (mesiIrrigare.includes(mese)) {
           const ir = calcolaIrrigazione(plant, appezz?.tipo, mese);
-          // giorni target: 1 ogni ir.giorni. Includo se (giornoIdx + offsetStable) % giorni === 0
-          // Uso plant.id come seed stabile
+          // stessa logica del calendario: giorni del mese in cui irrigare
           const seed = plant.id.charCodeAt(0) % ir.giorni;
-          if ((giornoIdx + seed) % ir.giorni === 0) {
+          const dayOfMonth = d.getDate();
+          // vero solo se questo giorno del mese è un giorno di irrigazione
+          if (((dayOfMonth - 1 - seed) % ir.giorni) === 0 && (dayOfMonth - 1 - seed) >= 0) {
             tasks.push({
               day: giornoIdx, data: d,
               ora: orarioSuggerito("irrigazione", mese),
@@ -3295,26 +3334,52 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
 
       {/* GIORNI */}
       <div className="space-y-3">
-        {giorniSett.map((d, idx) => {
-          const tasks = tasksPerGiorno[idx] || [];
-          const isOggi = d.getTime() === oggi.getTime();
-          const raggruppati = raggruppaPerOra(tasks);
-
+        {(() => {
+          // conta giorni passati (escluso oggi) nella settimana
+          const giorniPassati = giorniSett.filter(d => d < oggi).length;
+          const giorniMostrati = showPast ? giorniSett : giorniSett.filter(d => d >= oggi);
           return (
-            <div key={idx} className="card" style={{
-              opacity: d < oggi ? 0.55 : 1,
-              borderColor: isOggi ? "var(--c-terra)" : "var(--c-border)",
-              borderWidth: isOggi ? "2px" : "1.5px",
-            }}>
-              <div className="flex items-baseline justify-between mb-3">
-                <div>
-                  <p className="serif italic text-xs opacity-70">{GIORNI_LUNGHI[idx]}</p>
-                  <h3 className="display text-2xl">
-                    {d.getDate()} <span className="text-base font-normal" style={{ color: "var(--c-olive-dark)" }}>{MESI[d.getMonth()].slice(0,3).toLowerCase()}</span>
-                    {isOggi && <span className="chip terra ml-2" style={{ fontSize: "9px", verticalAlign: "middle" }}>oggi</span>}
-                  </h3>
-                </div>
-                <span className="chip">{tasks.length}</span>
+            <>
+              {/* Se ci sono giorni passati nascosti, mostra un link per rivelarli */}
+              {!showPast && giorniPassati > 0 && weekOffset >= 0 && (
+                <button onClick={() => setShowPast(true)}
+                  className="w-full card text-center py-3 opacity-60 hover:opacity-100 transition"
+                  style={{ cursor: "pointer", borderStyle: "dashed", background: "transparent" }}>
+                  <p className="text-xs serif italic">
+                    ↑ Mostra {giorniPassati} {giorniPassati === 1 ? "giorno passato" : "giorni passati"}
+                  </p>
+                </button>
+              )}
+              {showPast && weekOffset >= 0 && (
+                <button onClick={() => setShowPast(false)}
+                  className="w-full text-center py-1 text-xs opacity-50 hover:opacity-100 serif italic transition"
+                  style={{ cursor: "pointer", background: "transparent", border: "none" }}>
+                  ↓ Nascondi giorni passati
+                </button>
+              )}
+
+              {giorniMostrati.map((d) => {
+                const idx = giorniSett.findIndex(g => g.getTime() === d.getTime());
+                const tasks = tasksPerGiorno[idx] || [];
+                const isOggi = d.getTime() === oggi.getTime();
+                const raggruppati = raggruppaPerOra(tasks);
+                const isPast = d < oggi;
+
+                return (
+                  <div key={idx} className="card" style={{
+                    opacity: isPast ? 0.55 : 1,
+                    borderColor: isOggi ? "var(--c-terra)" : "var(--c-border)",
+                    borderWidth: isOggi ? "2px" : "1.5px",
+                  }}>
+                    <div className="flex items-baseline justify-between mb-3">
+                      <div>
+                        <p className="serif italic text-xs opacity-70">{GIORNI_LUNGHI[idx]}</p>
+                        <h3 className="display text-2xl">
+                          {d.getDate()} <span className="text-base font-normal" style={{ color: "var(--c-olive-dark)" }}>{MESI[d.getMonth()].slice(0,3).toLowerCase()}</span>
+                          {isOggi && <span className="chip terra ml-2" style={{ fontSize: "9px", verticalAlign: "middle" }}>oggi</span>}
+                        </h3>
+                      </div>
+                      <span className="chip">{tasks.length}</span>
               </div>
 
               {tasks.length === 0 ? (
@@ -3352,6 +3417,9 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
             </div>
           );
         })}
+            </>
+          );
+        })()}
       </div>
 
       <div className="card mt-6 p-4" style={{ background: "var(--c-cream)" }}>
