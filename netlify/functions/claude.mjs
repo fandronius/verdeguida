@@ -1,4 +1,5 @@
-// Netlify Function: proxy verso Anthropic API con logging errori dettagliato
+// Netlify Function: proxy verso Google Gemini API
+// La chiave sta in GEMINI_API_KEY delle env vars Netlify
 
 export default async (req, context) => {
   const corsHeaders = {
@@ -12,16 +13,16 @@ export default async (req, context) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+    return new Response(JSON.stringify({ error: { message: "Method not allowed" } }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const apiKey = Netlify.env.get("ANTHROPIC_API_KEY");
+  const apiKey = Netlify.env.get("GEMINI_API_KEY");
   if (!apiKey) {
     return new Response(JSON.stringify({
-      error: { message: "Server non configurato: manca ANTHROPIC_API_KEY" }
+      error: { message: "Server non configurato: manca GEMINI_API_KEY su Netlify" }
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -30,30 +31,54 @@ export default async (req, context) => {
 
   try {
     const body = await req.json();
+    const prompt = body.prompt;
+    const maxTokens = body.maxTokens || 1000;
 
-    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    // Leggo la risposta come testo prima, per poter loggare gli errori
-    const textResponse = await anthropicRes.text();
-
-    // Se Anthropic ha risposto con un errore, lo inoltro verbatim
-    if (!anthropicRes.ok) {
-      console.error("Anthropic API error:", anthropicRes.status, textResponse);
-      return new Response(textResponse, {
-        status: anthropicRes.status,
+    if (!prompt) {
+      return new Response(JSON.stringify({
+        error: { message: "Manca il campo 'prompt'" }
+      }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(textResponse, {
+    const model = "gemini-2.0-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const geminiBody = {
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        temperature: 0.7,
+      },
+    };
+
+    const geminiRes = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(geminiBody),
+    });
+
+    const textResponse = await geminiRes.text();
+
+    if (!geminiRes.ok) {
+      console.error("Gemini API error:", geminiRes.status, textResponse);
+      return new Response(textResponse, {
+        status: geminiRes.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Estraggo il testo e normalizzo in formato { content: [{ type: "text", text }] }
+    const data = JSON.parse(textResponse);
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    return new Response(JSON.stringify({
+      content: [{ type: "text", text }]
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
