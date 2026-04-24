@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Calendar, Sprout, BookOpen, Bell, Trash2, X, Droplets, Scissors, Sun, Leaf, CheckCircle2, Circle, MapPin, Home, Flower2, Edit3, Trees, Lightbulb, ExternalLink, Search, Layers, Menu, AlertTriangle, Clock, Euro, Settings, Download, Upload } from "lucide-react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Plus, Calendar, Sprout, BookOpen, Bell, Trash2, X, Droplets, Scissors, Sun, Leaf, CheckCircle2, Circle, MapPin, Home, Flower2, Edit3, Trees, Lightbulb, ExternalLink, Search, Layers, Menu, AlertTriangle, Clock, Euro, Settings, Download, Upload, HelpCircle, MoreHorizontal, ChevronRight } from "lucide-react";
 
 // ============================================================
 // STORAGE SHIM — localStorage con interfaccia async simile a window.storage
@@ -154,7 +154,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.5.3";
+const APP_VERSION = "1.5.6";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -210,6 +210,29 @@ const NotificationHelper = {
   },
 };
 
+
+// chiave deterministica per identificare un task giornaliero.
+// Data formato ISO "YYYY-MM-DD", tipo es. "irrigazione", plantId es. "pomodoro"
+function dayTaskKey(date, tipo, plantId) {
+  const iso = date instanceof Date ? date.toISOString().slice(0, 10) : date;
+  return `${iso}__${tipo}__${plantId}`;
+}
+
+// Moltiplicatore di resa per frutteto in base all'età (anni dall'impianto).
+// Restituisce un valore tra 0 e 1. Per le piante dell'orto annuale ritorna sempre 1.
+function resaPerEta(plant, userPlant) {
+  if (plant.categoria !== "frutteto") return 1;
+  const annoImpianto = userPlant.annoImpianto;
+  if (!annoImpianto) return 1; // se non specificato, assume piena produzione
+  const eta = new Date().getFullYear() - annoImpianto;
+  if (eta < 0) return 0;
+  if (eta < 3) return 0;
+  if (eta === 3) return 0.2;
+  if (eta === 4) return 0.4;
+  if (eta === 5) return 0.6;
+  if (eta === 6) return 0.8;
+  return 1;
+}
 
 function effectiveShift(appezzamento) {
   if (!appezzamento) return 0;
@@ -600,8 +623,63 @@ async function geocodificaLocalita(nome) {
 // ============================================================
 // APP ROOT
 // ============================================================
+// Definizione unificata delle tab / view di navigazione
+const VIEWS = [
+  { id: "home", label: "Il mio orto", shortLabel: "Orto", icon: Sprout },
+  { id: "agenda", label: "Questa settimana", shortLabel: "Oggi", icon: Clock },
+  { id: "calendario", label: "Calendario", shortLabel: "Calendario", icon: Calendar },
+  { id: "stagione", label: "Cosa piantare ora", shortLabel: "Stagione", icon: Leaf },
+  { id: "catalogo", label: "Catalogo piante", shortLabel: "Catalogo", icon: BookOpen },
+  { id: "tecniche", label: "Tecniche & hack", shortLabel: "Tecniche", icon: Lightbulb },
+  { id: "pacciamatura", label: "Pacciamatura", shortLabel: "Pacciame", icon: Layers },
+  { id: "appezzamenti", label: "Appezzamenti", shortLabel: "Aree", icon: MapPin },
+];
+
+// Hook swipe orizzontale: rileva gesti left/right con soglia e ignora scroll verticale
+function useSwipeHorizontal(onSwipeLeft, onSwipeRight) {
+  const touchStart = useRef(null);
+  const touchCurrent = useRef(null);
+
+  const onTouchStart = (e) => {
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+    touchCurrent.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const onTouchMove = (e) => {
+    if (!touchStart.current) return;
+    const t = e.touches[0];
+    touchCurrent.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart.current || !touchCurrent.current) return;
+    const dx = touchCurrent.current.x - touchStart.current.x;
+    const dy = touchCurrent.current.y - touchStart.current.y;
+    const dt = Date.now() - touchStart.current.time;
+
+    const MIN_DISTANCE = 75;     // distanza minima in pixel
+    const MAX_TIME = 600;        // tempo massimo (ms) - swipe rapido
+    const MAX_VERTICAL = 60;     // spostamento verticale max
+
+    if (dt < MAX_TIME && Math.abs(dx) > MIN_DISTANCE && Math.abs(dy) < MAX_VERTICAL) {
+      if (dx < 0 && onSwipeLeft) onSwipeLeft();
+      else if (dx > 0 && onSwipeRight) onSwipeRight();
+    }
+
+    touchStart.current = null;
+    touchCurrent.current = null;
+  };
+
+  return { onTouchStart, onTouchMove, onTouchEnd };
+}
+
 export default function VerdeGuida() {
   const [view, setView] = useState("home"); // home | calendario | stagione | catalogo | appezzamenti
+
+  const [showTour, setShowTour] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showFabMenu, setShowFabMenu] = useState(false);
   const [appezzamenti, setAppezzamenti] = useState([]);
   const [userPlants, setUserPlants] = useState([]);
   const [completedTasks, setCompletedTasks] = useState({});
@@ -624,6 +702,23 @@ export default function VerdeGuida() {
     time: "08:00", // HH:MM
   });
 
+  // ========== TASK GIORNALIERI COMPLETATI ==========
+  // Struttura: { "YYYY-MM-DD__tipo__plantId": true }
+  const [dayTasksDone, setDayTasksDone] = useState({});
+
+  const saveDayTasksDone = async (next) => {
+    setDayTasksDone(next);
+    try { await window.storage.set("day_tasks_done", JSON.stringify(next)); } catch(e){}
+  };
+
+  // toggle di un task (solo se è oggi)
+  const toggleDayTask = (taskKey) => {
+    const next = { ...dayTasksDone };
+    if (next[taskKey]) delete next[taskKey];
+    else next[taskKey] = true;
+    saveDayTasksDone(next);
+  };
+
   // appezzamento attivo (per filtrare viste)
   const [activeAppezzamentoId, setActiveAppezzamentoId] = useState("all");
 
@@ -634,18 +729,36 @@ export default function VerdeGuida() {
   useEffect(() => {
     (async () => {
       try {
-        const [aRes, pRes, tRes, cRes, nRes] = await Promise.all([
+        const [aRes, pRes, tRes, cRes, nRes, dRes] = await Promise.all([
           window.storage.get("appezzamenti").catch(() => null),
           window.storage.get("user_plants").catch(() => null),
           window.storage.get("completed_tasks").catch(() => null),
           window.storage.get("custom_plants").catch(() => null),
           window.storage.get("notif_settings").catch(() => null),
+          window.storage.get("day_tasks_done").catch(() => null),
         ]);
         if (aRes) setAppezzamenti(JSON.parse(aRes.value));
         if (pRes) setUserPlants(JSON.parse(pRes.value));
         if (tRes) setCompletedTasks(JSON.parse(tRes.value));
         if (cRes) setCustomPlants(JSON.parse(cRes.value));
         if (nRes) setNotifSettings(JSON.parse(nRes.value));
+        if (dRes) {
+          // carico e pulisco i task più vecchi di 30 giorni
+          const done = JSON.parse(dRes.value);
+          const trentaGgFa = new Date();
+          trentaGgFa.setDate(trentaGgFa.getDate() - 30);
+          const cutoff = trentaGgFa.toISOString().slice(0, 10); // "YYYY-MM-DD"
+          const cleaned = {};
+          Object.entries(done).forEach(([key, val]) => {
+            const keyDate = key.slice(0, 10);
+            if (keyDate >= cutoff) cleaned[key] = val;
+          });
+          setDayTasksDone(cleaned);
+          // salvo la versione pulita se è cambiata
+          if (Object.keys(cleaned).length !== Object.keys(done).length) {
+            try { await window.storage.set("day_tasks_done", JSON.stringify(cleaned)); } catch(e){}
+          }
+        }
       } catch(e) {}
       setLoading(false);
     })();
@@ -700,13 +813,14 @@ export default function VerdeGuida() {
   };
 
   // ========== PIANTE ==========
-  const addPlant = (catalogPlant, quantita, note, appezzamentoId) => {
+  const addPlant = (catalogPlant, quantita, note, appezzamentoId, annoImpianto) => {
     const newPlant = {
       id: `plant_${Date.now()}`,
       plantId: catalogPlant.id,
       quantita: quantita || 1,
       note: note || "",
       appezzamentoId: appezzamentoId || activeAppezzamentoId,
+      annoImpianto: annoImpianto || null,
       addedAt: new Date().toISOString(),
     };
     savePlants([...userPlants, newPlant]);
@@ -865,11 +979,12 @@ export default function VerdeGuida() {
   // ============================================================
   const todayTasks = useMemo(() => {
     const oggi = new Date();
+    const oggiIso = oggi.toISOString().slice(0, 10);
     const giornoSett = oggi.getDay();
     const giornoIdx = giornoSett === 0 ? 6 : giornoSett - 1; // lun=0, dom=6
     const mese = oggi.getMonth() + 1;
 
-    const tasksRaw = [];
+    const tasks = [];
     plantsVisible.forEach(up => {
       const plant = fullCatalog.find(p => p.id === up.plantId);
       if (!plant) return;
@@ -879,18 +994,21 @@ export default function VerdeGuida() {
       const trapianto = shiftMesi(plant.trapianto, shift);
       const raccolta = shiftMesi(plant.raccolta, shift);
 
-      // semina/trapianto: mercoledì (idx 2)
-      if (giornoIdx === 2 && semina.includes(mese)) {
-        tasksRaw.push({ tipo: "semina", plant, appezz });
-      }
-      if (giornoIdx === 2 && trapianto.includes(mese)) {
-        tasksRaw.push({ tipo: "trapianto", plant, appezz });
-      }
-      // raccolta: sabato (idx 5), no ornamentali
-      if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") {
-        tasksRaw.push({ tipo: "raccolta", plant, appezz });
-      }
-      // irrigazione: come nell'agenda
+      const addTask = (tipo, extra) => {
+        // evita duplicati stessa pianta+tipo (se più userPlant della stessa specie)
+        if (tasks.some(t => t.tipo === tipo && t.plant.id === plant.id)) return;
+        tasks.push({
+          id: dayTaskKey(oggiIso, tipo, plant.id),
+          tipo, plant,
+          appezzamenti: appezz ? [appezz.nome] : [],
+          extra,
+        });
+      };
+
+      if (giornoIdx === 2 && semina.includes(mese)) addTask("semina");
+      if (giornoIdx === 2 && trapianto.includes(mese)) addTask("trapianto");
+      if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") addTask("raccolta");
+
       const fabbisogno = plant.acqua;
       const mesiIrrigare = fabbisogno === "alta" ? [4,5,6,7,8,9,10]
         : fabbisogno === "media" ? [4,5,6,7,8,9]
@@ -900,35 +1018,20 @@ export default function VerdeGuida() {
         const seed = plant.id.charCodeAt(0) % ir.giorni;
         const dayOfMonth = oggi.getDate();
         if (((dayOfMonth - 1 - seed) % ir.giorni) === 0 && (dayOfMonth - 1 - seed) >= 0) {
-          tasksRaw.push({ tipo: "irrigazione", plant, appezz, vol: ir.volLabel });
+          addTask("irrigazione", ir.volLabel);
         }
       }
-      // potatura: sabato frutteto non custom
       if (giornoIdx === 5 && plant.categoria === "frutteto" && !plant.custom) {
         let meseTarget = 2;
         if (plant.id === "olivo") meseTarget = 3;
         if (plant.id === "vite" && mese === 1) meseTarget = 1;
         if (plant.id === "vite" && mese === 6) meseTarget = 6;
-        if (mese === meseTarget) {
-          tasksRaw.push({ tipo: "potatura", plant, appezz });
-        }
+        if (mese === meseTarget) addTask("potatura");
       }
     });
 
-    // raggruppa per tipo
-    const groupMap = new Map();
-    tasksRaw.forEach(t => {
-      if (!groupMap.has(t.tipo)) groupMap.set(t.tipo, { tipo: t.tipo, piante: [], appezzamenti: new Set(), extra: t.vol });
-      const g = groupMap.get(t.tipo);
-      if (!g.piante.some(p => p.id === t.plant.id)) {
-        g.piante.push({ id: t.plant.id, nome: t.plant.nome, emoji: t.plant.emoji });
-      }
-      if (t.appezz) g.appezzamenti.add(t.appezz.nome);
-    });
-    return Array.from(groupMap.values()).map(g => ({
-      ...g,
-      appezzamenti: Array.from(g.appezzamenti),
-    }));
+    // Accorpo le appezzamenti per tipo+pianta (se stessa pianta in più appezzamenti)
+    return tasks;
   }, [plantsVisible, fullCatalog, appezzamenti]);
 
   // ============================================================
@@ -1001,6 +1104,21 @@ export default function VerdeGuida() {
     setSelectedPlant(plant);
     setShowAddPlantModal(true);
   };
+
+  // ========== SWIPE tra tab ==========
+  const SWIPE_ORDER = ["home", "agenda", "calendario", "catalogo"]; // quelle primary
+  const swipeHandlers = useSwipe(
+    () => {
+      // swipe sinistra → tab successiva
+      const idx = SWIPE_ORDER.indexOf(view);
+      if (idx >= 0 && idx < SWIPE_ORDER.length - 1) setView(SWIPE_ORDER[idx + 1]);
+    },
+    () => {
+      // swipe destra → tab precedente
+      const idx = SWIPE_ORDER.indexOf(view);
+      if (idx > 0) setView(SWIPE_ORDER[idx - 1]);
+    }
+  );
 
   if (loading) {
     return (
@@ -1087,6 +1205,12 @@ export default function VerdeGuida() {
             <div className="flex items-center gap-2 text-xs" style={{ color: "var(--c-olive-dark)" }}>
               <Sun size={14}/> <span className="serif italic">{MESI[currentMonth]} · {new Date().getFullYear()}</span>
             </div>
+            <button onClick={() => setShowTour(true)}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition"
+              style={{ background: "var(--c-cream)", border: "1.5px solid var(--c-border)", cursor: "pointer" }}
+              title="Come funziona VerdeGuida">
+              <HelpCircle size={16} style={{ color: "var(--c-ink)" }}/>
+            </button>
             <button onClick={() => setShowSettings(true)}
               className="w-9 h-9 rounded-full flex items-center justify-center transition"
               style={{ background: "var(--c-cream)", border: "1.5px solid var(--c-border)", cursor: "pointer" }}
@@ -1116,18 +1240,9 @@ export default function VerdeGuida() {
           </div>
         )}
 
-        {/* NAV */}
-        <nav className="mt-5 flex gap-2 overflow-x-auto scroll-hide pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
-          {[
-            { id: "home", label: "Il mio orto", icon: Sprout },
-            { id: "agenda", label: "Questa settimana", icon: Clock },
-            { id: "calendario", label: "Calendario", icon: Calendar },
-            { id: "stagione", label: "Cosa piantare ora", icon: Leaf },
-            { id: "catalogo", label: "Catalogo piante", icon: BookOpen },
-            { id: "tecniche", label: "Tecniche & hack", icon: Lightbulb },
-            { id: "pacciamatura", label: "Pacciamatura", icon: Layers },
-            { id: "appezzamenti", label: "Appezzamenti", icon: MapPin },
-          ].map(n => (
+        {/* NAV (solo desktop, su mobile uso bottom nav) */}
+        <nav className="mt-5 hidden md:flex gap-2 overflow-x-auto scroll-hide pb-1 md:flex-wrap">
+          {VIEWS.map(n => (
             <button key={n.id} onClick={() => setView(n.id)} className={`btn-ghost flex-shrink-0 ${view === n.id ? "active" : ""}`}>
               <n.icon size={14}/> {n.label}
             </button>
@@ -1137,7 +1252,8 @@ export default function VerdeGuida() {
 
       <div className="hairline mx-6 md:mx-10 max-w-6xl" style={{ marginLeft: "auto", marginRight: "auto" }}></div>
 
-      <main className="px-4 md:px-10 py-6 md:py-8 max-w-6xl mx-auto">
+      <main className="px-4 md:px-10 py-6 md:py-8 pb-24 md:pb-8 max-w-6xl mx-auto"
+        {...swipeHandlers}>
         {view === "home" && <HomeView
           appezzamenti={appezzamenti}
           activeApp={activeApp}
@@ -1157,12 +1273,16 @@ export default function VerdeGuida() {
           todayTasks={todayTasks}
           onOpenSettings={() => setShowSettings(true)}
           notifEnabled={notifSettings.enabled && notifPermission === "granted"}
+          dayTasksDone={dayTasksDone}
+          onToggleDayTask={toggleDayTask}
         />}
 
         {view === "agenda" && <AgendaView
           userPlants={plantsVisible}
           fullCatalog={fullCatalog}
           appezzamenti={appezzamenti}
+          dayTasksDone={dayTasksDone}
+          onToggleDayTask={toggleDayTask}
         />}
 
         {view === "calendario" && <CalendarView
@@ -1207,6 +1327,18 @@ export default function VerdeGuida() {
         />}
       </main>
 
+      {/* FAB: pulsante Aggiungi galleggiante (solo mobile) */}
+      {!loading && (
+        <FAB
+          onAddPlant={() => setView("catalogo")}
+          onAddAppezzamento={() => { setEditingAppezzamento(null); setShowAppezzamentoModal(true); }}
+          hasAppezzamenti={appezzamenti.length > 0}
+        />
+      )}
+
+      {/* BOTTOM NAV (solo mobile, fissa in basso) */}
+      <BottomNav view={view} setView={setView}/>
+
       {showAddPlantModal && selectedPlant && (
         <AddPlantModal
           plant={selectedPlant}
@@ -1247,6 +1379,8 @@ export default function VerdeGuida() {
         />
       )}
 
+      {showTour && <TourModal onClose={() => setShowTour(false)} />}
+
       {showSettings && (
         <SettingsModal
           onClose={() => setShowSettings(false)}
@@ -1274,7 +1408,26 @@ export default function VerdeGuida() {
         />
       )}
 
-      <footer className="px-4 md:px-10 py-8 max-w-6xl mx-auto">
+      {showTour && <TourModal onClose={() => setShowTour(false)} onGoTo={(v) => { setView(v); setShowTour(false); }}/>}
+
+      {/* ═══ BOTTOM NAV (solo mobile) ═══ */}
+      <BottomNav
+        view={view}
+        setView={setView}
+        showMoreMenu={showMoreMenu}
+        setShowMoreMenu={setShowMoreMenu}
+      />
+
+      {/* ═══ FAB Aggiungi (solo mobile) ═══ */}
+      <Fab
+        showMenu={showFabMenu}
+        setShowMenu={setShowFabMenu}
+        onAddPlant={() => { setView("catalogo"); setShowFabMenu(false); }}
+        onAddAppezzamento={() => { setEditingAppezzamento(null); setShowAppezzamentoModal(true); setShowFabMenu(false); }}
+        onAddCustom={() => { setEditingCustomPlant(null); setShowCustomPlantModal(true); setShowFabMenu(false); }}
+      />
+
+      <footer className="px-4 md:px-10 py-8 max-w-6xl mx-auto pb-24 md:pb-8">
         <div className="hairline mb-4"></div>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <p className="serif italic text-xs" style={{ color: "var(--c-olive-dark)" }}>
@@ -1292,7 +1445,7 @@ export default function VerdeGuida() {
 // ============================================================
 // VIEW: HOME
 // ============================================================
-function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCatalog, removePlant, onEditPlant, upcomingTasks, toggleTaskDone, completedTasks, onAdd, onAddAppezzamento, plantsToSowNow, currentMonth, onQuickAddPlant, todayTasks, onOpenSettings, notifEnabled }) {
+function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCatalog, removePlant, onEditPlant, upcomingTasks, toggleTaskDone, completedTasks, onAdd, onAddAppezzamento, plantsToSowNow, currentMonth, onQuickAddPlant, todayTasks, onOpenSettings, notifEnabled, dayTasksDone, onToggleDayTask }) {
 
   // onboarding se nessun appezzamento
   if (appezzamenti.length === 0) {
@@ -1318,14 +1471,17 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
     userPlants.forEach(up => {
       const cat = fullCatalog.find(p => p.id === up.plantId);
       if (!cat) return;
-      const prev = map.get(cat.id) || { plant: cat, quantita: 0 };
+      const prev = map.get(cat.id) || { plant: cat, quantita: 0, valore: 0 };
       prev.quantita += up.quantita;
-      map.set(cat.id, prev);
       if (cat.resaKg && cat.prezzoKg && cat.categoria !== "ornamentale") {
-        const kg = cat.resaKg * up.quantita;
+        const mult = resaPerEta(cat, up);
+        const kg = cat.resaKg * up.quantita * mult;
+        const val = kg * cat.prezzoKg;
+        prev.valore += val;
         kgTot += kg;
-        valoreTot += kg * cat.prezzoKg;
+        valoreTot += val;
       }
+      map.set(cat.id, prev);
     });
     return { items: Array.from(map.values()), valoreTot, kgTot };
   }, [userPlants, fullCatalog]);
@@ -1339,6 +1495,8 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
             todayTasks={todayTasks}
             onOpenSettings={onOpenSettings}
             notifEnabled={notifEnabled}
+            dayTasksDone={dayTasksDone}
+            onToggleDayTask={onToggleDayTask}
           />
         </section>
       )}
@@ -1361,16 +1519,13 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              {riepilogo.items.map(({ plant, quantita }) => {
-                const val = (plant.resaKg && plant.prezzoKg && plant.categoria !== "ornamentale")
-                  ? (plant.resaKg * quantita * plant.prezzoKg)
-                  : 0;
+              {riepilogo.items.map(({ plant, quantita, valore }) => {
                 return (
                   <div key={plant.id} className="px-3 py-2 rounded-full flex items-center gap-2" style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
                     <span className="text-lg">{plant.emoji}</span>
                     <span className="font-bold text-sm">{plant.nome}</span>
                     <span className="text-xs opacity-70">× {quantita}</span>
-                    {val > 0 && <span className="text-[10px] italic" style={{ color: "var(--c-olive-dark)" }}>~€{val.toFixed(0)}</span>}
+                    {valore > 0 && <span className="text-[10px] italic" style={{ color: "var(--c-olive-dark)" }}>~€{valore.toFixed(0)}</span>}
                   </div>
                 );
               })}
@@ -2101,6 +2256,7 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
   const [note, setNote] = useState("");
   const [appezzamentoId, setAppezzamentoId] = useState(defaultAppezzamentoId || appezzamenti[0]?.id);
   const [confirmOutOfSeason, setConfirmOutOfSeason] = useState(false);
+  const [annoImpianto, setAnnoImpianto] = useState(""); // anno di impianto (solo per frutteto)
 
   const selectedApp = appezzamenti.find(a => a.id === appezzamentoId);
   const irrigazione = selectedApp ? calcolaIrrigazione(plant, selectedApp.tipo, currentMonth + 1) : null;
@@ -2259,6 +2415,21 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
           </div>
         </label>
 
+        {/* Anno impianto - solo per frutteti */}
+        {plant.categoria === "frutteto" && (
+          <label className="block mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Anno di impianto (opzionale)</span>
+            <input type="number" min="1950" max={new Date().getFullYear()}
+              value={annoImpianto} onChange={(e) => setAnnoImpianto(e.target.value)}
+              placeholder={`Es: ${new Date().getFullYear() - 5}`}
+              className="w-full mt-1 px-3 py-2 rounded-lg text-sm" style={{ border: "1.5px solid var(--c-border)", background: "var(--c-cream)" }}/>
+            <p className="text-[11px] opacity-60 italic mt-1">
+              Serve a calcolare una resa realistica. Gli alberi giovani producono meno: &lt; 3 anni non producono, poi ~20% al terzo anno fino a produzione piena dal settimo.
+              {plant.id === "olivo" && <><br/>🫒 <b>Per l'olivo</b>: la resa stimata (~25 kg/pianta) si riferisce a olive da tavola. Per l'olio considera che ~5 kg di olive fanno 1 L.</>}
+            </p>
+          </label>
+        )}
+
         <label className="block mb-5">
           <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Note personali (opzionale)</span>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows="2"
@@ -2269,7 +2440,7 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
         <div className="flex gap-2">
           <button className="btn-ghost flex-1" onClick={onClose}>Annulla</button>
           <button className="btn-primary flex-1 justify-center"
-            onClick={() => onAdd(plant, quantita, note, appezzamentoId)}
+            onClick={() => onAdd(plant, quantita, note, appezzamentoId, annoImpianto ? parseInt(annoImpianto) : null)}
             disabled={fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason}
             style={fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason ? { opacity: 0.5, cursor: "not-allowed" } : {}}>
             <Plus size={14}/> {fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason ? "Fuori stagione" : "Aggiungi"}
@@ -2288,6 +2459,7 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
   const [quantita, setQuantita] = useState(userPlant.quantita);
   const [note, setNote] = useState(userPlant.note || "");
   const [appezzamentoId, setAppezzamentoId] = useState(userPlant.appezzamentoId);
+  const [annoImpianto, setAnnoImpianto] = useState(userPlant.annoImpianto || "");
   const [problemi, setProblemi] = useState(userPlant.problemi || []);
   const [showProblemaForm, setShowProblemaForm] = useState(false);
   if (!plant) return null;
@@ -2376,6 +2548,29 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
               </div>
             </label>
 
+            {/* Anno impianto - solo per frutteti */}
+            {plant.categoria === "frutteto" && (
+              <label className="block mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Anno di impianto</span>
+                <input type="number" min="1950" max={new Date().getFullYear()}
+                  value={annoImpianto} onChange={(e) => setAnnoImpianto(e.target.value)}
+                  placeholder="Es: 2020"
+                  className="w-full mt-1 px-3 py-2 rounded-lg text-sm" style={{ border: "1.5px solid var(--c-border)", background: "var(--c-cream)" }}/>
+                {annoImpianto && (() => {
+                  const eta = new Date().getFullYear() - parseInt(annoImpianto);
+                  const mult = resaPerEta(plant, { annoImpianto: parseInt(annoImpianto) });
+                  return (
+                    <p className="text-[11px] opacity-70 italic mt-1">
+                      Età: <b>{eta} {eta === 1 ? "anno" : "anni"}</b>.
+                      {mult === 0 && " Ancora in fase di attecchimento, resa zero."}
+                      {mult > 0 && mult < 1 && ` Resa stimata al ${(mult * 100).toFixed(0)}% della produzione piena.`}
+                      {mult === 1 && " Pianta in piena produzione."}
+                    </p>
+                  );
+                })()}
+              </label>
+            )}
+
             <label className="block mb-5">
               <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Note personali</span>
               <textarea value={note} onChange={(e) => setNote(e.target.value)} rows="2"
@@ -2436,7 +2631,7 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
           </button>
           <button className="btn-ghost flex-1" onClick={onClose}>Annulla</button>
           <button className="btn-primary flex-1 justify-center"
-            onClick={() => onSave(userPlant.id, { quantita, note, appezzamentoId, problemi })}>
+            onClick={() => onSave(userPlant.id, { quantita, note, appezzamentoId, problemi, annoImpianto: annoImpianto ? parseInt(annoImpianto) : null })}>
             Salva
           </button>
         </div>
@@ -3103,7 +3298,7 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali r
 // ============================================================
 // VIEW: AGENDA SETTIMANALE — giorni × orari con task suggeriti
 // ============================================================
-function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
+function AgendaView({ userPlants, fullCatalog, appezzamenti, dayTasksDone, onToggleDayTask }) {
   const [weekOffset, setWeekOffset] = useState(0); // 0 = questa settimana
   const [showPast, setShowPast] = useState(false); // mostra giorni passati?
 
@@ -3175,6 +3370,8 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
         // SEMINA: mercoledì (idx 2) se il mese corrisponde
         if (giornoIdx === 2 && semina.includes(mese)) {
           tasks.push({
+            id: dayTaskKey(d, "semina", plant.id),
+            plantId: plant.id,
             day: giornoIdx, data: d,
             ora: orarioSuggerito("semina", mese),
             type: "semina", icon: "🌱",
@@ -3189,6 +3386,8 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
         // TRAPIANTO: mercoledì anche questo
         if (giornoIdx === 2 && trapianto.includes(mese)) {
           tasks.push({
+            id: dayTaskKey(d, "trapianto", plant.id),
+            plantId: plant.id,
             day: giornoIdx, data: d,
             ora: orarioSuggerito("trapianto", mese),
             type: "trapianto", icon: "🪴",
@@ -3203,6 +3402,8 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
         // RACCOLTA: sabato mattina (idx 5) se il mese corrisponde e NON è ornamentale
         if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") {
           tasks.push({
+            id: dayTaskKey(d, "raccolta", plant.id),
+            plantId: plant.id,
             day: giornoIdx, data: d,
             ora: orarioSuggerito("raccolta", mese),
             type: "raccolta", icon: "🧺",
@@ -3227,6 +3428,8 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
           // vero solo se questo giorno del mese è un giorno di irrigazione
           if (((dayOfMonth - 1 - seed) % ir.giorni) === 0 && (dayOfMonth - 1 - seed) >= 0) {
             tasks.push({
+              id: dayTaskKey(d, "irrigazione", plant.id),
+              plantId: plant.id,
               day: giornoIdx, data: d,
               ora: orarioSuggerito("irrigazione", mese),
               type: "irrigazione", icon: "💧",
@@ -3247,6 +3450,8 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
           if (plant.id === "vite" && mese === 6) meseTarget = 6;
           if (mese === meseTarget) {
             tasks.push({
+              id: dayTaskKey(d, "potatura", plant.id),
+              plantId: plant.id,
               day: giornoIdx, data: d,
               ora: orarioSuggerito("potatura", mese),
               type: "potatura", icon: "✂️",
@@ -3281,7 +3486,12 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
         map.set(key, { ora: t.ora, type: t.type, icon: t.icon, color: t.color, piante: [], desc: t.desc, appezzamenti: new Set() });
       }
       const g = map.get(key);
-      g.piante.push({ nome: t.titolo.replace(/^(Irriga|Semina|Trapianto|Raccolta|Potatura) /, ""), emoji: t.plantEmoji });
+      g.piante.push({
+        id: t.id,
+        plantId: t.plantId,
+        nome: t.titolo.replace(/^(Irriga|Semina|Trapianto|Raccolta|Potatura) /, ""),
+        emoji: t.plantEmoji,
+      });
       if (t.appNome) g.appezzamenti.add(t.appNome);
     });
     return Array.from(map.values()).sort((a,b) => a.ora.localeCompare(b.ora));
@@ -3386,32 +3596,60 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
                 <p className="text-xs opacity-50 italic serif">Riposo — niente da fare oggi.</p>
               ) : (
                 <div className="space-y-2">
-                  {raggruppati.map((g, i) => (
-                    <div key={i} className="flex items-start gap-3 p-2 rounded-lg" style={{ background: "var(--c-bg)" }}>
-                      <div className="flex flex-col items-center flex-shrink-0" style={{ minWidth: "52px" }}>
-                        <span className="font-mono font-bold text-sm" style={{ color: g.color }}>{g.ora}</span>
-                        <span className="text-xl mt-0.5">{g.icon}</span>
+                  {raggruppati.map((g, i) => {
+                    const labelAzione = g.type === "irrigazione" ? "Irriga" :
+                      g.type === "semina" ? "Semina" :
+                      g.type === "trapianto" ? "Trapianta" :
+                      g.type === "raccolta" ? "Raccogli" :
+                      g.type === "potatura" ? "Pota" : g.type;
+                    return (
+                      <div key={i} className="p-2 rounded-lg" style={{ background: "var(--c-bg)" }}>
+                        <div className="flex items-start gap-3">
+                          <div className="flex flex-col items-center flex-shrink-0" style={{ minWidth: "52px" }}>
+                            <span className="font-mono font-bold text-sm" style={{ color: g.color }}>{g.ora}</span>
+                            <span className="text-xl mt-0.5">{g.icon}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: g.color }}>
+                              {labelAzione}
+                            </p>
+                            <div className="space-y-1">
+                              {g.piante.map((p) => {
+                                const fatto = !!dayTasksDone[p.id];
+                                return (
+                                  <button key={p.id}
+                                    onClick={() => isOggi && onToggleDayTask && onToggleDayTask(p.id)}
+                                    disabled={!isOggi}
+                                    className="w-full flex items-center gap-2 text-left transition"
+                                    style={{
+                                      background: "transparent",
+                                      border: "none",
+                                      padding: "4px 0",
+                                      cursor: isOggi ? "pointer" : "default",
+                                      opacity: fatto ? 0.55 : 1,
+                                    }}>
+                                    <span className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                                      style={{
+                                        background: fatto ? "var(--c-olive)" : "transparent",
+                                        border: `2px solid ${fatto ? "var(--c-olive)" : (isOggi ? "var(--c-olive-dark)" : "var(--c-border)")}`,
+                                      }}>
+                                      {fatto && <CheckCircle2 size={11} style={{ color: "var(--c-cream)" }}/>}
+                                    </span>
+                                    <span className="text-sm" style={{ textDecoration: fatto ? "line-through" : "none" }}>
+                                      {p.emoji} {p.nome.toLowerCase()}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {g.appezzamenti.size > 0 && (
+                              <p className="text-[10px] opacity-60 mt-1.5">📍 {Array.from(g.appezzamenti).join(", ")}</p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm capitalize">
-                          {g.type === "irrigazione" ? "Irriga" :
-                           g.type === "semina" ? "Semina" :
-                           g.type === "trapianto" ? "Trapianta" :
-                           g.type === "raccolta" ? "Raccolta" :
-                           g.type === "potatura" ? "Potatura" : g.type}
-                          {" "}
-                          <span className="font-normal opacity-80">
-                            {g.piante.map((p, j) => (
-                              <span key={j}>{j > 0 && ", "}{p.emoji} {p.nome.toLowerCase()}</span>
-                            ))}
-                          </span>
-                        </p>
-                        {g.appezzamenti.size > 0 && (
-                          <p className="text-[10px] opacity-60 mt-0.5">📍 {Array.from(g.appezzamenti).join(", ")}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -3752,18 +3990,21 @@ function EmojiPicker({ value, onChange }) {
 // ============================================================
 // COMPONENTE: OGGI — mostra i task del giorno in modo visibile
 // ============================================================
-function TodaySection({ todayTasks, onOpenSettings, notifEnabled }) {
+function TodaySection({ todayTasks, onOpenSettings, notifEnabled, dayTasksDone, onToggleDayTask }) {
   const OGGI_COLORS = {
     semina: { label: "Semina", icon: "🌱", color: "var(--c-olive)" },
     trapianto: { label: "Trapianta", icon: "🪴", color: "var(--c-olive-dark)" },
-    raccolta: { label: "Raccolta", icon: "🧺", color: "var(--c-ochre)" },
+    raccolta: { label: "Raccogli", icon: "🧺", color: "var(--c-ochre)" },
     irrigazione: { label: "Irriga", icon: "💧", color: "#4a6fa5" },
-    potatura: { label: "Potatura", icon: "✂️", color: "var(--c-terra)" },
+    potatura: { label: "Pota", icon: "✂️", color: "var(--c-terra)" },
   };
 
   const oggi = new Date();
   const opzioniData = { weekday: "long", day: "numeric", month: "long" };
   const dataFormat = oggi.toLocaleDateString("it-IT", opzioniData);
+
+  const tasksFatti = todayTasks.filter(t => dayTasksDone[t.id]).length;
+  const tasksTot = todayTasks.length;
 
   if (todayTasks.length === 0) {
     return (
@@ -3788,6 +4029,9 @@ function TodaySection({ todayTasks, onOpenSettings, notifEnabled }) {
         <div>
           <p className="serif italic text-xs opacity-80">— oggi, {dataFormat} —</p>
           <h3 className="serif font-bold text-2xl mt-1">Da fare nell'orto</h3>
+          {tasksFatti > 0 && (
+            <p className="text-xs opacity-80 mt-1">✓ {tasksFatti} di {tasksTot} completati</p>
+          )}
         </div>
         <button onClick={onOpenSettings}
           className="flex-shrink-0 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-semibold transition"
@@ -3804,29 +4048,44 @@ function TodaySection({ todayTasks, onOpenSettings, notifEnabled }) {
       </div>
 
       <div className="space-y-2">
-        {todayTasks.map((t, i) => {
+        {todayTasks.map((t) => {
           const meta = OGGI_COLORS[t.tipo];
           if (!meta) return null;
+          const fatto = !!dayTasksDone[t.id];
           return (
-            <div key={i} className="flex items-start gap-3 p-3 rounded-lg"
-              style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
+            <button key={t.id}
+              onClick={() => onToggleDayTask(t.id)}
+              className="w-full flex items-start gap-3 p-3 rounded-lg text-left transition"
+              style={{
+                background: fatto ? "rgba(255,255,255,0.5)" : "var(--c-cream)",
+                color: "var(--c-ink)",
+                border: "none",
+                cursor: "pointer",
+                opacity: fatto ? 0.7 : 1,
+              }}>
+              {/* checkbox/spunta */}
+              <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
+                style={{
+                  background: fatto ? "var(--c-olive)" : "transparent",
+                  border: `2px solid ${fatto ? "var(--c-olive)" : "var(--c-olive-dark)"}`,
+                }}>
+                {fatto && <CheckCircle2 size={14} style={{ color: "var(--c-cream)" }}/>}
+              </span>
+
               <span className="text-2xl flex-shrink-0">{meta.icon}</span>
+
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">
+                <p className="font-bold text-sm" style={{ textDecoration: fatto ? "line-through" : "none" }}>
                   <span style={{ color: meta.color }}>{meta.label}</span>
                   {" "}
-                  <span className="font-normal">
-                    {t.piante.map((p, j) => (
-                      <span key={p.id}>{j > 0 && ", "}{p.emoji} {p.nome.toLowerCase()}</span>
-                    ))}
-                  </span>
+                  <span className="font-normal">{t.plant.emoji} {t.plant.nome.toLowerCase()}</span>
                 </p>
                 {t.extra && <p className="text-[11px] opacity-70 mt-0.5">{t.extra}</p>}
                 {t.appezzamenti.length > 0 && (
                   <p className="text-[10px] opacity-60 mt-0.5">📍 {t.appezzamenti.join(", ")}</p>
                 )}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -3836,6 +4095,336 @@ function TodaySection({ todayTasks, onOpenSettings, notifEnabled }) {
           💡 Attiva i promemoria per ricevere una notifica ogni mattina con quello che c'è da fare.
         </p>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// HOOK SWIPE — rileva swipe orizzontale per cambiare tab
+// ============================================================
+function useSwipe(onSwipeLeft, onSwipeRight, minDistance = 60) {
+  const touchStart = useRef(null);
+  const touchEnd = useRef(null);
+
+  const onTouchStart = (e) => {
+    // se il target è dentro un elemento scrollabile orizzontalmente, ignora
+    let el = e.target;
+    while (el && el !== e.currentTarget) {
+      const style = window.getComputedStyle(el);
+      if (
+        (style.overflowX === "auto" || style.overflowX === "scroll") &&
+        el.scrollWidth > el.clientWidth
+      ) return;
+      el = el.parentElement;
+    }
+    touchEnd.current = null;
+    touchStart.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    };
+  };
+
+  const onTouchMove = (e) => {
+    touchEnd.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    };
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart.current || !touchEnd.current) return;
+    const dx = touchStart.current.x - touchEnd.current.x;
+    const dy = touchStart.current.y - touchEnd.current.y;
+    // solo se il movimento è sostanzialmente orizzontale
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > minDistance) {
+      if (dx > 0) onSwipeLeft && onSwipeLeft();
+      else onSwipeRight && onSwipeRight();
+    }
+    touchStart.current = null;
+    touchEnd.current = null;
+  };
+
+  return { onTouchStart, onTouchMove, onTouchEnd };
+}
+
+// ============================================================
+// COMPONENTE: BOTTOM NAV mobile — tab fisse in basso
+// ============================================================
+function BottomNav({ view, setView }) {
+  // Mostro max 5 tab nella bottom nav, le altre in un menu "Altro"
+  const primary = VIEWS.slice(0, 4);
+  const secondary = VIEWS.slice(4);
+  const [showMore, setShowMore] = useState(false);
+  const secondaryActive = secondary.some(v => v.id === view);
+
+  return (
+    <>
+      {/* Menu "Altro" che appare sopra la bottom nav */}
+      {showMore && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 90 }}
+          onClick={() => setShowMore(false)}
+          className="md:hidden">
+          <div className="absolute bottom-16 left-2 right-2 card p-2 shadow-lg"
+            style={{ background: "var(--c-bg)", border: "1.5px solid var(--c-border)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="grid grid-cols-2 gap-1">
+              {secondary.map(n => {
+                const active = view === n.id;
+                const Icon = n.icon;
+                return (
+                  <button key={n.id}
+                    onClick={() => { setView(n.id); setShowMore(false); }}
+                    className="flex items-center gap-2 p-3 rounded-lg text-left transition"
+                    style={{
+                      background: active ? "var(--c-terra)" : "var(--c-cream)",
+                      color: active ? "var(--c-cream)" : "var(--c-ink)",
+                      cursor: "pointer",
+                      border: "none",
+                    }}>
+                    <Icon size={16}/>
+                    <span className="text-sm font-semibold">{n.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          background: "var(--c-bg)",
+          borderTop: "1.5px solid var(--c-border)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}>
+        <div className="flex items-stretch justify-around">
+          {primary.map(n => {
+            const active = view === n.id;
+            const Icon = n.icon;
+            return (
+              <button key={n.id} onClick={() => { setView(n.id); setShowMore(false); }}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: active ? "var(--c-terra)" : "var(--c-ink)",
+                  opacity: active ? 1 : 0.6,
+                }}>
+                <Icon size={20} strokeWidth={active ? 2.5 : 1.8}/>
+                <span className="text-[10px] font-semibold tracking-tight">{n.shortLabel}</span>
+                {active && <span className="absolute bottom-0 h-0.5 w-8 rounded-t-full" style={{ background: "var(--c-terra)" }}/>}
+              </button>
+            );
+          })}
+          {/* bottone "Altro" */}
+          <button onClick={() => setShowMore(s => !s)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition relative"
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: (showMore || secondaryActive) ? "var(--c-terra)" : "var(--c-ink)",
+              opacity: (showMore || secondaryActive) ? 1 : 0.6,
+            }}>
+            <MoreHorizontal size={20} strokeWidth={(showMore || secondaryActive) ? 2.5 : 1.8}/>
+            <span className="text-[10px] font-semibold tracking-tight">Altro</span>
+            {secondaryActive && !showMore && <span className="absolute top-1 right-5 w-1.5 h-1.5 rounded-full" style={{ background: "var(--c-terra)" }}/>}
+          </button>
+        </div>
+      </nav>
+    </>
+  );
+}
+
+// ============================================================
+// COMPONENTE: FAB (Floating Action Button) — Aggiungi rapido
+// ============================================================
+function FAB({ onAddPlant, onAddAppezzamento, hasAppezzamenti }) {
+  const [open, setOpen] = useState(false);
+
+  const handleAddPlant = () => {
+    setOpen(false);
+    if (hasAppezzamenti) onAddPlant();
+    else onAddAppezzamento(); // se non ha appezzamenti, forza prima quello
+  };
+
+  const handleAddApp = () => {
+    setOpen(false);
+    onAddAppezzamento();
+  };
+
+  return (
+    <>
+      {/* Backdrop quando aperto */}
+      {open && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(42,36,24,0.3)" }}
+          onClick={() => setOpen(false)}
+          className="md:hidden"/>
+      )}
+
+      {/* Menu azioni */}
+      <div className="md:hidden fixed right-4 z-[85] flex flex-col items-end gap-2"
+        style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}>
+        {open && (
+          <div className="flex flex-col items-end gap-2 fade-up">
+            <button onClick={handleAddApp}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg"
+              style={{
+                background: "var(--c-cream)",
+                color: "var(--c-ink)",
+                border: "1.5px solid var(--c-border)",
+                cursor: "pointer",
+              }}>
+              <MapPin size={16}/>
+              <span className="text-sm font-semibold">Nuovo appezzamento</span>
+            </button>
+            <button onClick={handleAddPlant}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg"
+              style={{
+                background: "var(--c-cream)",
+                color: "var(--c-ink)",
+                border: "1.5px solid var(--c-border)",
+                cursor: "pointer",
+              }}>
+              <Sprout size={16}/>
+              <span className="text-sm font-semibold">Aggiungi pianta</span>
+            </button>
+          </div>
+        )}
+
+        {/* Pulsante principale */}
+        <button onClick={() => setOpen(s => !s)}
+          className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition"
+          style={{
+            background: "var(--c-terra)",
+            color: "var(--c-cream)",
+            border: "none",
+            cursor: "pointer",
+            transform: open ? "rotate(45deg)" : "rotate(0)",
+          }}
+          title="Aggiungi">
+          <Plus size={26} strokeWidth={2.5}/>
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ============================================================
+// COMPONENTE: TOUR MODAL — "Come funziona" guida dell'app
+// ============================================================
+function TourModal({ onClose }) {
+  const [step, setStep] = useState(0);
+
+  const steps = [
+    {
+      emoji: "🌱",
+      title: "Benvenuto in VerdeGuida",
+      body: "Il tuo quaderno di campagna digitale. Gestisci piante, tempi di semina, raccolte e irrigazioni in un unico posto, con consigli su misura per il clima della tua zona.",
+    },
+    {
+      emoji: "🗺️",
+      title: "Inizia dagli appezzamenti",
+      body: "Un appezzamento è un luogo dove coltivi: il terreno, il giardino, un balcone, la serra. Creandolo ti viene chiesta la località: serve a calcolare il microclima (latitudine e altitudine) e adattare i consigli al tuo clima specifico.",
+      tip: "Puoi segnalare se hai una serra, se fai idroponica o se hai bancali rialzati: i consigli si adatteranno.",
+    },
+    {
+      emoji: "🍅",
+      title: "Aggiungi le tue piante",
+      body: "Dal Catalogo scegli le piante che hai o vuoi coltivare. 18 già pronte (pomodoro, olivo, ciliegio…) più la possibilità di aggiungerne di nuove: scrivi il nome e l'AI pre-compila tutto (descrizione, calendario, acqua, sole).",
+      tip: "Per frutteti (olivo, vite…) inserisci l'anno di impianto: un albero giovane produce meno, e il calcolo si adegua.",
+    },
+    {
+      emoji: "📅",
+      title: "Calendario e Agenda",
+      body: "Il Calendario mostra tutti gli interventi del mese: semina, trapianto, raccolta, irrigazione, potatura. L'Agenda settimanale (Oggi) organizza tutto giorno per giorno, con orari consigliati (es. 18:00 d'estate per l'irrigazione).",
+      tip: "Oggi puoi spuntare i task completati: restano visibili con il segno ✓.",
+    },
+    {
+      emoji: "🔔",
+      title: "Promemoria giornaliero",
+      body: "Dal menu Impostazioni ⚙ attivi una notifica giornaliera a un'ora a tua scelta, con il riepilogo di cosa c'è da fare oggi nell'orto.",
+      tip: "Funziona su Android (se l'app è installata sulla home). Ogni tanto apri l'app per tenerla attiva.",
+    },
+    {
+      emoji: "🔬",
+      title: "Problemi e rimedi",
+      body: "Se una pianta si ammala, aprila e vai nella scheda Problemi. Registra il sintomo, e con un tap chiedi rimedi biologici all'AI.",
+      tip: "Le ricerche AI usano Groq, gratis fino a 14.400/giorno — più che sufficienti.",
+    },
+    {
+      emoji: "💾",
+      title: "Backup dei dati",
+      body: "I dati sono salvati sul tuo dispositivo. Dalle Impostazioni ⚙ puoi esportare un backup JSON con tutto il tuo orto: appezzamenti, piante, interventi, problemi. Utile per trasferire su un altro telefono o per sicurezza.",
+    },
+    {
+      emoji: "✨",
+      title: "Tutto chiaro?",
+      body: "Naviga con le tab in basso (o scorri orizzontalmente per passare da una all'altra). Il + rosso in basso a destra ti apre le scorciatoie rapide.",
+      tip: "Buon orto!",
+    },
+  ];
+
+  const current = steps[step];
+  const isLast = step === steps.length - 1;
+  const isFirst = step === 0;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(42,36,24,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }} className="modal-overlay" onClick={onClose}>
+      <div className="card" style={{ maxWidth: "540px", width: "100%", background: "var(--c-bg)", maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between mb-4">
+          <p className="serif italic text-xs" style={{ color: "var(--c-olive-dark)" }}>— guida — passo {step + 1} di {steps.length}</p>
+          <button onClick={onClose} className="opacity-60 hover:opacity-100"><X size={20}/></button>
+        </div>
+
+        {/* Progress dots */}
+        <div className="flex gap-1 mb-5">
+          {steps.map((_, i) => (
+            <div key={i} className="flex-1 rounded-full transition"
+              style={{
+                height: "3px",
+                background: i <= step ? "var(--c-terra)" : "var(--c-border)",
+              }}/>
+          ))}
+        </div>
+
+        <div className="text-center py-4">
+          <div className="text-6xl mb-4">{current.emoji}</div>
+          <h3 className="display text-3xl mb-3">{current.title}</h3>
+          <p className="text-sm leading-relaxed opacity-85 max-w-md mx-auto">{current.body}</p>
+          {current.tip && (
+            <div className="card p-3 mt-4 max-w-md mx-auto" style={{ background: "var(--c-cream)" }}>
+              <p className="text-xs serif italic" style={{ color: "var(--c-olive-dark)" }}>
+                💡 {current.tip}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="hairline my-5"></div>
+
+        <div className="flex items-center gap-2">
+          <button className="btn-ghost"
+            onClick={() => setStep(s => Math.max(0, s - 1))}
+            disabled={isFirst}
+            style={{ opacity: isFirst ? 0.3 : 1, cursor: isFirst ? "default" : "pointer" }}>
+            ← Indietro
+          </button>
+          <div className="flex-1 text-center text-xs opacity-50 serif italic">
+            {step + 1} / {steps.length}
+          </div>
+          {!isLast ? (
+            <button className="btn-primary" onClick={() => setStep(s => s + 1)}>
+              Avanti <ChevronRight size={14}/>
+            </button>
+          ) : (
+            <button className="btn-primary" onClick={onClose}>
+              Inizia! <Sprout size={14}/>
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
