@@ -154,7 +154,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.4.1";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -2237,7 +2237,13 @@ Formato: testo semplice, con intestazioni "Causa:", "Rimedi:", "Prevenzione:" se
       });
 
       if (!res.ok) {
-        throw new Error(`Server ha risposto ${res.status}`);
+        let dettaglio = `Server ha risposto ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody.error?.message) dettaglio += ` — ${errBody.error.message}`;
+          else if (errBody.error?.type) dettaglio += ` — ${errBody.error.type}`;
+        } catch (e) { /* ignora */ }
+        throw new Error(dettaglio);
       }
 
       const data = await res.json();
@@ -2550,7 +2556,14 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Basati su fonti ital
       });
 
       if (!res.ok) {
-        throw new Error(`Server ha risposto ${res.status}. Su Netlify verifica che la variabile ANTHROPIC_API_KEY sia impostata.`);
+        // leggo il messaggio vero di Anthropic
+        let dettaglio = `Server ha risposto ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody.error?.message) dettaglio += ` — ${errBody.error.message}`;
+          else if (errBody.error?.type) dettaglio += ` — ${errBody.error.type}`;
+        } catch (e) { /* ignora */ }
+        throw new Error(dettaglio);
       }
 
       const data = await res.json();
