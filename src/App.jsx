@@ -154,7 +154,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.4.3";
+const APP_VERSION = "1.5.0";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -163,6 +163,54 @@ const CLAUDE_API_ENDPOINT = "/api/claude";
 
 // Shift stagionale effettivo: microclima + bonus serra (anticipa ~3 settimane).
 // La serra tipo appezzamento o il flag hasSerra contribuiscono entrambi.
+// ============================================================
+// NOTIFICHE LOCALI — reminder giornaliero
+// ============================================================
+const NotificationHelper = {
+  // chiedi il permesso all'utente
+  async requestPermission() {
+    if (!("Notification" in window)) return "unsupported";
+    if (Notification.permission === "granted") return "granted";
+    if (Notification.permission === "denied") return "denied";
+    const result = await Notification.requestPermission();
+    return result;
+  },
+  // invia una notifica ora
+  async notify(title, body, options = {}) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return false;
+    try {
+      // preferisco il service worker se disponibile (più affidabile su Android)
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification(title, {
+          body,
+          icon: "/icon-192.png",
+          badge: "/icon-192.png",
+          tag: options.tag || "verdeguida-reminder",
+          requireInteraction: false,
+          ...options,
+        });
+        return true;
+      }
+      new Notification(title, { body, icon: "/icon-192.png", ...options });
+      return true;
+    } catch (e) {
+      console.error("Errore notifica:", e);
+      return false;
+    }
+  },
+  // calcola i millisecondi fino alla prossima occorrenza di oraHHMM (es "08:00")
+  msUntilNext(oraHHMM) {
+    const [h, m] = oraHHMM.split(":").map(Number);
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(h, m, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    return next - now;
+  },
+};
+
+
 function effectiveShift(appezzamento) {
   if (!appezzamento) return 0;
   let shift = appezzamento.microclima?.shiftSett || 0;
@@ -540,6 +588,13 @@ export default function VerdeGuida() {
   const [customPlants, setCustomPlants] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
 
+  // ========== NOTIFICHE ==========
+  const [notifPermission, setNotifPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "default");
+  const [notifSettings, setNotifSettings] = useState({
+    enabled: false,
+    time: "08:00", // HH:MM
+  });
+
   // appezzamento attivo (per filtrare viste)
   const [activeAppezzamentoId, setActiveAppezzamentoId] = useState("all");
 
@@ -550,20 +605,28 @@ export default function VerdeGuida() {
   useEffect(() => {
     (async () => {
       try {
-        const [aRes, pRes, tRes, cRes] = await Promise.all([
+        const [aRes, pRes, tRes, cRes, nRes] = await Promise.all([
           window.storage.get("appezzamenti").catch(() => null),
           window.storage.get("user_plants").catch(() => null),
           window.storage.get("completed_tasks").catch(() => null),
           window.storage.get("custom_plants").catch(() => null),
+          window.storage.get("notif_settings").catch(() => null),
         ]);
         if (aRes) setAppezzamenti(JSON.parse(aRes.value));
         if (pRes) setUserPlants(JSON.parse(pRes.value));
         if (tRes) setCompletedTasks(JSON.parse(tRes.value));
         if (cRes) setCustomPlants(JSON.parse(cRes.value));
+        if (nRes) setNotifSettings(JSON.parse(nRes.value));
       } catch(e) {}
       setLoading(false);
     })();
   }, []);
+
+  // salvataggio impostazioni notifiche
+  const saveNotifSettings = async (next) => {
+    setNotifSettings(next);
+    try { await window.storage.set("notif_settings", JSON.stringify(next)); } catch(e){}
+  };
 
   // ========== SAVE ==========
   const saveCustomPlants = async (next) => {
@@ -767,6 +830,134 @@ export default function VerdeGuida() {
     return allTasks.filter(t => (t.mese === now || t.mese === next) && !completedTasks[t.id]).slice(0, 5);
   }, [allTasks, completedTasks, currentMonth]);
 
+  // ============================================================
+  // TASK DI OGGI — replica la logica dell'agenda settimanale ma solo per oggi
+  // Ritorna array di { tipo, piante: [{nome,emoji}], appezzamenti: [string] }
+  // ============================================================
+  const todayTasks = useMemo(() => {
+    const oggi = new Date();
+    const giornoSett = oggi.getDay();
+    const giornoIdx = giornoSett === 0 ? 6 : giornoSett - 1; // lun=0, dom=6
+    const mese = oggi.getMonth() + 1;
+
+    const tasksRaw = [];
+    plantsVisible.forEach(up => {
+      const plant = fullCatalog.find(p => p.id === up.plantId);
+      if (!plant) return;
+      const appezz = appezzamenti.find(a => a.id === up.appezzamentoId);
+      const shift = effectiveShift(appezz);
+      const semina = shiftMesi(plant.semina, shift);
+      const trapianto = shiftMesi(plant.trapianto, shift);
+      const raccolta = shiftMesi(plant.raccolta, shift);
+
+      // semina/trapianto: mercoledì (idx 2)
+      if (giornoIdx === 2 && semina.includes(mese)) {
+        tasksRaw.push({ tipo: "semina", plant, appezz });
+      }
+      if (giornoIdx === 2 && trapianto.includes(mese)) {
+        tasksRaw.push({ tipo: "trapianto", plant, appezz });
+      }
+      // raccolta: sabato (idx 5), no ornamentali
+      if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") {
+        tasksRaw.push({ tipo: "raccolta", plant, appezz });
+      }
+      // irrigazione: come nell'agenda
+      const fabbisogno = plant.acqua;
+      const mesiIrrigare = fabbisogno === "alta" ? [5,6,7,8,9]
+        : fabbisogno === "media" ? [6,7,8]
+        : [7,8];
+      if (mesiIrrigare.includes(mese)) {
+        const ir = calcolaIrrigazione(plant, appezz?.tipo, mese);
+        const seed = plant.id.charCodeAt(0) % ir.giorni;
+        if ((giornoIdx + seed) % ir.giorni === 0) {
+          tasksRaw.push({ tipo: "irrigazione", plant, appezz, vol: ir.volLabel });
+        }
+      }
+      // potatura: sabato frutteto non custom
+      if (giornoIdx === 5 && plant.categoria === "frutteto" && !plant.custom) {
+        let meseTarget = 2;
+        if (plant.id === "olivo") meseTarget = 3;
+        if (plant.id === "vite" && mese === 1) meseTarget = 1;
+        if (plant.id === "vite" && mese === 6) meseTarget = 6;
+        if (mese === meseTarget) {
+          tasksRaw.push({ tipo: "potatura", plant, appezz });
+        }
+      }
+    });
+
+    // raggruppa per tipo
+    const groupMap = new Map();
+    tasksRaw.forEach(t => {
+      if (!groupMap.has(t.tipo)) groupMap.set(t.tipo, { tipo: t.tipo, piante: [], appezzamenti: new Set(), extra: t.vol });
+      const g = groupMap.get(t.tipo);
+      if (!g.piante.some(p => p.id === t.plant.id)) {
+        g.piante.push({ id: t.plant.id, nome: t.plant.nome, emoji: t.plant.emoji });
+      }
+      if (t.appezz) g.appezzamenti.add(t.appezz.nome);
+    });
+    return Array.from(groupMap.values()).map(g => ({
+      ...g,
+      appezzamenti: Array.from(g.appezzamenti),
+    }));
+  }, [plantsVisible, fullCatalog, appezzamenti]);
+
+  // ============================================================
+  // SCHEDULE NOTIFICHE — setTimeout all'ora scelta, loop ogni 24h
+  // ============================================================
+  useEffect(() => {
+    if (!notifSettings.enabled || notifPermission !== "granted") return;
+
+    const tipoLabels = {
+      semina: "semina", trapianto: "trapianta",
+      raccolta: "raccogli", irrigazione: "irriga", potatura: "pota"
+    };
+
+    const scheduleNext = () => {
+      const ms = NotificationHelper.msUntilNext(notifSettings.time);
+      return setTimeout(() => {
+        // calcolo al momento dello scatto (todayTasks potrebbe essere stale)
+        const oggi = new Date();
+        const giornoSett = oggi.getDay();
+        const giornoIdx = giornoSett === 0 ? 6 : giornoSett - 1;
+        const mese = oggi.getMonth() + 1;
+
+        const tasksOggi = [];
+        plantsVisible.forEach(up => {
+          const plant = fullCatalog.find(p => p.id === up.plantId);
+          if (!plant) return;
+          const appezz = appezzamenti.find(a => a.id === up.appezzamentoId);
+          const shift = effectiveShift(appezz);
+          const semina = shiftMesi(plant.semina, shift);
+          const trapianto = shiftMesi(plant.trapianto, shift);
+          const raccolta = shiftMesi(plant.raccolta, shift);
+
+          if (giornoIdx === 2 && semina.includes(mese)) tasksOggi.push(`semina ${plant.nome}`);
+          if (giornoIdx === 2 && trapianto.includes(mese)) tasksOggi.push(`trapianta ${plant.nome}`);
+          if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") tasksOggi.push(`raccogli ${plant.nome}`);
+          const fab = plant.acqua;
+          const mesiI = fab === "alta" ? [5,6,7,8,9] : fab === "media" ? [6,7,8] : [7,8];
+          if (mesiI.includes(mese)) {
+            const ir = calcolaIrrigazione(plant, appezz?.tipo, mese);
+            const seed = plant.id.charCodeAt(0) % ir.giorni;
+            if ((giornoIdx + seed) % ir.giorni === 0) tasksOggi.push(`irriga ${plant.nome}`);
+          }
+        });
+
+        if (tasksOggi.length > 0) {
+          const body = tasksOggi.slice(0, 6).join(", ") + (tasksOggi.length > 6 ? `, e altre ${tasksOggi.length - 6} cose` : "");
+          NotificationHelper.notify("🌱 Buongiorno! Oggi nell'orto:", body, { tag: "daily-reminder" });
+        } else {
+          NotificationHelper.notify("🌱 Buongiorno!", "Oggi nessun intervento programmato. Goditi il tuo orto.", { tag: "daily-reminder" });
+        }
+        // schedula la prossima
+        scheduleNext();
+      }, ms);
+    };
+
+    const timer = scheduleNext();
+    return () => clearTimeout(timer);
+  }, [notifSettings, notifPermission, plantsVisible, fullCatalog, appezzamenti]);
+
   const activeApp = activeAppezzamentoId === "all" ? null : appezzamenti.find(a => a.id === activeAppezzamentoId);
 
   // ========== HANDLERS PER MODAL AGGIUNGI ==========
@@ -932,6 +1123,9 @@ export default function VerdeGuida() {
           plantsToSowNow={plantsToSowNow}
           currentMonth={currentMonth}
           onQuickAddPlant={openAddFromCatalog}
+          todayTasks={todayTasks}
+          onOpenSettings={() => setShowSettings(true)}
+          notifEnabled={notifSettings.enabled && notifPermission === "granted"}
         />}
 
         {view === "agenda" && <AgendaView
@@ -1033,6 +1227,19 @@ export default function VerdeGuida() {
             userPlants: userPlants.length,
             customPlants: customPlants.length,
           }}
+          notifSettings={notifSettings}
+          notifPermission={notifPermission}
+          onNotifChange={async (next) => {
+            await saveNotifSettings(next);
+            if (next.enabled && notifPermission !== "granted") {
+              const result = await NotificationHelper.requestPermission();
+              setNotifPermission(result);
+              if (result === "granted") {
+                // notifica di test/conferma
+                NotificationHelper.notify("🌱 Promemoria attivati!", `Riceverai un riepilogo ogni giorno alle ${next.time}`, { tag: "welcome" });
+              }
+            }
+          }}
         />
       )}
 
@@ -1054,7 +1261,7 @@ export default function VerdeGuida() {
 // ============================================================
 // VIEW: HOME
 // ============================================================
-function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCatalog, removePlant, onEditPlant, upcomingTasks, toggleTaskDone, completedTasks, onAdd, onAddAppezzamento, plantsToSowNow, currentMonth, onQuickAddPlant }) {
+function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCatalog, removePlant, onEditPlant, upcomingTasks, toggleTaskDone, completedTasks, onAdd, onAddAppezzamento, plantsToSowNow, currentMonth, onQuickAddPlant, todayTasks, onOpenSettings, notifEnabled }) {
 
   // onboarding se nessun appezzamento
   if (appezzamenti.length === 0) {
@@ -1094,6 +1301,17 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
 
   return (
     <div className="space-y-6">
+      {/* ═════════════ OGGI — reminder del giorno ═════════════ */}
+      {userPlants.length > 0 && (
+        <section className="fade-up">
+          <TodaySection
+            todayTasks={todayTasks}
+            onOpenSettings={onOpenSettings}
+            notifEnabled={notifEnabled}
+          />
+        </section>
+      )}
+
       {/* RIEPILOGO A COLPO D'OCCHIO */}
       {userPlants.length > 0 && (
         <section className="fade-up">
@@ -3121,7 +3339,7 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
 // ============================================================
 // MODAL: IMPOSTAZIONI / BACKUP
 // ============================================================
-function SettingsModal({ onClose, onExport, onImport, onReset, stats }) {
+function SettingsModal({ onClose, onExport, onImport, onReset, stats, notifSettings, notifPermission, onNotifChange }) {
   const [importResult, setImportResult] = useState(null);
   const [importing, setImporting] = useState(false);
 
@@ -3160,6 +3378,75 @@ function SettingsModal({ onClose, onExport, onImport, onReset, stats }) {
           <div className="card p-3 text-center">
             <p className="text-[10px] uppercase tracking-wider opacity-60">Piante nuove</p>
             <p className="display text-2xl" style={{ color: "var(--c-ochre)" }}>{stats.customPlants}</p>
+          </div>
+        </div>
+
+        {/* PROMEMORIA / NOTIFICHE */}
+        <div className="card mb-4 p-4" style={{ background: "var(--c-cream)" }}>
+          <div className="flex items-start gap-3">
+            <Bell size={20} style={{ color: "var(--c-olive-dark)" }} className="flex-shrink-0 mt-1"/>
+            <div className="flex-1">
+              <h4 className="serif font-bold text-base">Promemoria giornaliero</h4>
+              <p className="text-xs opacity-70 mt-1 mb-3">
+                Ricevi una notifica ogni mattina con tutto quello che c'è da fare nell'orto oggi: irrigazioni, raccolte, semine.
+              </p>
+
+              {notifPermission === "denied" && (
+                <div className="p-2.5 rounded-lg mb-3" style={{ background: "#ffe0e0", border: "1.5px solid #c83737" }}>
+                  <p className="text-[11px] leading-relaxed" style={{ color: "#c83737" }}>
+                    <b>⚠️ Notifiche bloccate.</b> Le hai rifiutate in passato. Per attivarle vai nelle impostazioni del browser → Notifiche → consenti per questo sito, poi torna qui.
+                  </p>
+                </div>
+              )}
+
+              {notifPermission === "unsupported" && (
+                <div className="p-2.5 rounded-lg mb-3" style={{ background: "#fff3cd", border: "1.5px solid #d4a73b" }}>
+                  <p className="text-[11px] leading-relaxed">
+                    <b>Il tuo browser non supporta le notifiche.</b> Prova con Chrome o installa l'app sulla Home.
+                  </p>
+                </div>
+              )}
+
+              <label className="flex items-center gap-3 cursor-pointer mb-3">
+                <input
+                  type="checkbox"
+                  checked={notifSettings.enabled}
+                  onChange={(e) => onNotifChange({ ...notifSettings, enabled: e.target.checked })}
+                  disabled={notifPermission === "denied" || notifPermission === "unsupported"}
+                  className="w-5 h-5"
+                />
+                <span className="text-sm font-semibold">
+                  {notifSettings.enabled ? "Promemoria attivi" : "Attiva promemoria"}
+                </span>
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-wider opacity-70">A che ora?</span>
+                <input
+                  type="time"
+                  value={notifSettings.time}
+                  onChange={(e) => onNotifChange({ ...notifSettings, time: e.target.value })}
+                  disabled={!notifSettings.enabled}
+                  className="mt-1 px-3 py-2 rounded-lg"
+                  style={{
+                    border: "1.5px solid var(--c-border)",
+                    background: notifSettings.enabled ? "white" : "transparent",
+                    opacity: notifSettings.enabled ? 1 : 0.5,
+                    fontSize: "16px",
+                  }}
+                />
+              </label>
+
+              {notifSettings.enabled && notifPermission === "granted" && (
+                <p className="text-[11px] italic mt-2" style={{ color: "var(--c-olive-dark)" }}>
+                  ✓ Ti arriverà una notifica ogni mattina alle {notifSettings.time}. Funziona quando il telefono è acceso e l'app è stata aperta almeno una volta nelle ultime ore.
+                </p>
+              )}
+
+              <p className="text-[10px] opacity-60 mt-2 leading-relaxed">
+                <b>Nota:</b> le notifiche sono locali. Funzionano bene su Android quando l'app è installata sulla home. Per garantire che arrivino, tieni l'app aperta occasionalmente.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -3359,6 +3646,97 @@ function EmojiPicker({ value, onChange }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ============================================================
+// COMPONENTE: OGGI — mostra i task del giorno in modo visibile
+// ============================================================
+function TodaySection({ todayTasks, onOpenSettings, notifEnabled }) {
+  const OGGI_COLORS = {
+    semina: { label: "Semina", icon: "🌱", color: "var(--c-olive)" },
+    trapianto: { label: "Trapianta", icon: "🪴", color: "var(--c-olive-dark)" },
+    raccolta: { label: "Raccolta", icon: "🧺", color: "var(--c-ochre)" },
+    irrigazione: { label: "Irriga", icon: "💧", color: "#4a6fa5" },
+    potatura: { label: "Potatura", icon: "✂️", color: "var(--c-terra)" },
+  };
+
+  const oggi = new Date();
+  const opzioniData = { weekday: "long", day: "numeric", month: "long" };
+  const dataFormat = oggi.toLocaleDateString("it-IT", opzioniData);
+
+  if (todayTasks.length === 0) {
+    return (
+      <div className="card" style={{ background: "var(--c-cream)" }}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <p className="serif italic text-xs opacity-70">— oggi, {dataFormat} —</p>
+            <h3 className="serif font-bold text-xl mt-1">🌤️ Giornata tranquilla</h3>
+            <p className="text-sm opacity-80 mt-1">Nessun intervento programmato. Approfittane per osservare le piante e pianificare.</p>
+          </div>
+          <button onClick={onOpenSettings} className="flex-shrink-0 opacity-60 hover:opacity-100" title="Promemoria">
+            <Bell size={18} style={{ color: notifEnabled ? "var(--c-terra)" : "var(--c-ink)" }}/>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card" style={{ background: "var(--c-terra)", color: "var(--c-cream)", borderColor: "var(--c-terra)" }}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <p className="serif italic text-xs opacity-80">— oggi, {dataFormat} —</p>
+          <h3 className="serif font-bold text-2xl mt-1">Da fare nell'orto</h3>
+        </div>
+        <button onClick={onOpenSettings}
+          className="flex-shrink-0 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-semibold transition"
+          style={{
+            background: notifEnabled ? "var(--c-cream)" : "transparent",
+            color: notifEnabled ? "var(--c-terra)" : "var(--c-cream)",
+            border: `1.5px solid var(--c-cream)`,
+            cursor: "pointer",
+          }}
+          title="Imposta promemoria">
+          <Bell size={12}/>
+          {notifEnabled ? "Attivi" : "Promemoria"}
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {todayTasks.map((t, i) => {
+          const meta = OGGI_COLORS[t.tipo];
+          if (!meta) return null;
+          return (
+            <div key={i} className="flex items-start gap-3 p-3 rounded-lg"
+              style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
+              <span className="text-2xl flex-shrink-0">{meta.icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">
+                  <span style={{ color: meta.color }}>{meta.label}</span>
+                  {" "}
+                  <span className="font-normal">
+                    {t.piante.map((p, j) => (
+                      <span key={p.id}>{j > 0 && ", "}{p.emoji} {p.nome.toLowerCase()}</span>
+                    ))}
+                  </span>
+                </p>
+                {t.extra && <p className="text-[11px] opacity-70 mt-0.5">{t.extra}</p>}
+                {t.appezzamenti.length > 0 && (
+                  <p className="text-[10px] opacity-60 mt-0.5">📍 {t.appezzamenti.join(", ")}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {!notifEnabled && (
+        <p className="text-[11px] serif italic opacity-80 mt-3">
+          💡 Attiva i promemoria per ricevere una notifica ogni mattina con quello che c'è da fare.
+        </p>
+      )}
     </div>
   );
 }
