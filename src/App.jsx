@@ -154,7 +154,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.5.2";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -522,14 +522,43 @@ function generateTasksForPlant(userPlant, appezzamento, catalog = PLANT_CATALOG)
     });
   });
 
-  // irrigazione suggerita per mesi chiave
-  const mesiIrrigazione = plant.acqua === "alta" ? [5,6,7,8,9] : plant.acqua === "media" ? [6,7,8] : [7,8];
+  // irrigazione suggerita per tutti i mesi dell'anno, con intensità variabile
+  // La funzione calcolaIrrigazione(plant, tipo, mese) regola già frequenza e volume
+  // in base alla stagione, quindi basta iterare tutti i mesi rilevanti per la pianta.
+  // Logica:
+  // - acqua alta: aprile-ottobre (trapianti primaverili + estate lunga + residuo autunnale)
+  // - acqua media: aprile-settembre
+  // - acqua bassa: giugno-agosto (solo picco estivo)
+  // Le ornamentali/frutteti stabili seguono la stessa logica.
+  const mesiIrrigazione = plant.acqua === "alta"
+    ? [4,5,6,7,8,9,10]
+    : plant.acqua === "media"
+    ? [4,5,6,7,8,9]
+    : [6,7,8];
   mesiIrrigazione.forEach(m => {
     const ir = calcolaIrrigazione(plant, appezzamento?.tipo, m);
+    // Calcolo le date precise nel mese (se ogni N giorni, genero le date)
+    const anno = year;
+    const meseIdx = m - 1;
+    const giorniNelMese = new Date(anno, m, 0).getDate();
+    const dateIrrigazione = [];
+    // parto dal primo del mese, aggiungo ir.giorni ogni volta
+    // seed sulla pianta per variare tra piante (evita clustering)
+    const seed = plant.id.charCodeAt(0) % ir.giorni;
+    for (let d = 1 + seed; d <= giorniNelMese; d += ir.giorni) {
+      dateIrrigazione.push(d);
+    }
+    // formatto le date come "Lun 3, Gio 6, Dom 9, ..."
+    const GG = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+    const dateLabel = dateIrrigazione.map(d => {
+      const date = new Date(anno, meseIdx, d);
+      return `${GG[date.getDay()]} ${d}`;
+    }).join(", ");
     tasks.push({
       type: "irrigazione", icon: "💧", mese: m, year,
-      titolo: `Irrigazione ${plant.nome}`,
-      descrizione: `${ir.freqLabel}, ${ir.volLabel}. Annaffia al mattino presto o alla sera.`
+      titolo: `Irriga ${plant.nome}`,
+      descrizione: `${ir.freqLabel}, ${ir.volLabel}. Giorni consigliati: ${dateLabel}.`,
+      giorni: dateIrrigazione,
     });
   });
 
@@ -863,9 +892,9 @@ export default function VerdeGuida() {
       }
       // irrigazione: come nell'agenda
       const fabbisogno = plant.acqua;
-      const mesiIrrigare = fabbisogno === "alta" ? [5,6,7,8,9]
-        : fabbisogno === "media" ? [6,7,8]
-        : [7,8];
+      const mesiIrrigare = fabbisogno === "alta" ? [4,5,6,7,8,9,10]
+        : fabbisogno === "media" ? [4,5,6,7,8,9]
+        : [6,7,8];
       if (mesiIrrigare.includes(mese)) {
         const ir = calcolaIrrigazione(plant, appezz?.tipo, mese);
         const seed = plant.id.charCodeAt(0) % ir.giorni;
@@ -935,7 +964,7 @@ export default function VerdeGuida() {
           if (giornoIdx === 2 && trapianto.includes(mese)) tasksOggi.push(`trapianta ${plant.nome}`);
           if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") tasksOggi.push(`raccogli ${plant.nome}`);
           const fab = plant.acqua;
-          const mesiI = fab === "alta" ? [5,6,7,8,9] : fab === "media" ? [6,7,8] : [7,8];
+          const mesiI = fab === "alta" ? [4,5,6,7,8,9,10] : fab === "media" ? [4,5,6,7,8,9] : [6,7,8];
           if (mesiI.includes(mese)) {
             const ir = calcolaIrrigazione(plant, appezz?.tipo, mese);
             const seed = plant.id.charCodeAt(0) % ir.giorni;
@@ -1290,7 +1319,7 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
       const prev = map.get(cat.id) || { plant: cat, quantita: 0 };
       prev.quantita += up.quantita;
       map.set(cat.id, prev);
-      if (cat.resaKg && cat.prezzoKg) {
+      if (cat.resaKg && cat.prezzoKg && cat.categoria !== "ornamentale") {
         const kg = cat.resaKg * up.quantita;
         kgTot += kg;
         valoreTot += kg * cat.prezzoKg;
@@ -1331,7 +1360,9 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
             </div>
             <div className="flex flex-wrap gap-2">
               {riepilogo.items.map(({ plant, quantita }) => {
-                const val = plant.resaKg && plant.prezzoKg ? (plant.resaKg * quantita * plant.prezzoKg) : 0;
+                const val = (plant.resaKg && plant.prezzoKg && plant.categoria !== "ornamentale")
+                  ? (plant.resaKg * quantita * plant.prezzoKg)
+                  : 0;
                 return (
                   <div key={plant.id} className="px-3 py-2 rounded-full flex items-center gap-2" style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
                     <span className="text-lg">{plant.emoji}</span>
