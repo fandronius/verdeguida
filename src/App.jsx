@@ -154,7 +154,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.5.6";
+const APP_VERSION = "1.5.7";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -678,8 +678,6 @@ export default function VerdeGuida() {
   const [view, setView] = useState("home"); // home | calendario | stagione | catalogo | appezzamenti
 
   const [showTour, setShowTour] = useState(false);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [showFabMenu, setShowFabMenu] = useState(false);
   const [appezzamenti, setAppezzamenti] = useState([]);
   const [userPlants, setUserPlants] = useState([]);
   const [completedTasks, setCompletedTasks] = useState({});
@@ -1407,25 +1405,6 @@ export default function VerdeGuida() {
           }}
         />
       )}
-
-      {showTour && <TourModal onClose={() => setShowTour(false)} onGoTo={(v) => { setView(v); setShowTour(false); }}/>}
-
-      {/* ═══ BOTTOM NAV (solo mobile) ═══ */}
-      <BottomNav
-        view={view}
-        setView={setView}
-        showMoreMenu={showMoreMenu}
-        setShowMoreMenu={setShowMoreMenu}
-      />
-
-      {/* ═══ FAB Aggiungi (solo mobile) ═══ */}
-      <Fab
-        showMenu={showFabMenu}
-        setShowMenu={setShowFabMenu}
-        onAddPlant={() => { setView("catalogo"); setShowFabMenu(false); }}
-        onAddAppezzamento={() => { setEditingAppezzamento(null); setShowAppezzamentoModal(true); setShowFabMenu(false); }}
-        onAddCustom={() => { setEditingCustomPlant(null); setShowCustomPlantModal(true); setShowFabMenu(false); }}
-      />
 
       <footer className="px-4 md:px-10 py-8 max-w-6xl mx-auto pb-24 md:pb-8">
         <div className="hairline mb-4"></div>
