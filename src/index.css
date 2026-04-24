@@ -24,3 +24,19 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(42,36,24,0.2); border-radius: 3px; }
 }
+
+/* ============================================================
+   Fix responsive per i form con input + bottone cerca:
+   Sotto 500px il bottone va a capo e occupa tutta la larghezza,
+   mentre su desktop resta in riga.
+   ============================================================ */
+@media (max-width: 500px) {
+  .cerca-plant-wrap {
+    flex-direction: column !important;
+  }
+  .cerca-plant-wrap > input,
+  .cerca-plant-wrap > button {
+    width: 100% !important;
+    flex: 0 0 auto !important;
+  }
+}
