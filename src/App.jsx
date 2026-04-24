@@ -154,7 +154,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.4.1";
+const APP_VERSION = "1.4.2";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -2228,12 +2228,7 @@ Formato: testo semplice, con intestazioni "Causa:", "Rimedi:", "Prevenzione:" se
       const res = await fetch(CLAUDE_API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 600,
-          messages: [{ role: "user", content: prompt }],
-          tools: [{ type: "web_search_20250305", name: "web_search" }],
-        }),
+        body: JSON.stringify({ prompt, maxTokens: 600 }),
       });
 
       if (!res.ok) {
@@ -2541,18 +2536,13 @@ Restituisci SOLO un oggetto JSON valido (no testo prima o dopo, no markdown, no 
   "vasoOk": true o false (se è adatta alla coltivazione in vaso)
 }
 
-Importante: i mesi devono essere numerati 1-12 (gennaio=1). Basati su fonti italiane affidabili.`;
+Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenza delle piante per il clima mediterraneo italiano.`;
 
     try {
       const res = await fetch(CLAUDE_API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: prompt }],
-          tools: [{ type: "web_search_20250305", name: "web_search" }],
-        }),
+        body: JSON.stringify({ prompt, maxTokens: 1000 }),
       });
 
       if (!res.ok) {
