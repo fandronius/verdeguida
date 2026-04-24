@@ -32,61 +32,122 @@ const PLANT_CATALOG = [
     semina: [3,4], trapianto: [4,5], raccolta: [7,8,9],
     spazio: "60 cm tra piante", acqua: "alta", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 4, prezzoKg: 2.5  },
+    resaKg: 4, prezzoKg: 2.5,
+    giorniMaturazione: 80,
+    concimi: [
+      { nome: "Compost maturo", quando: "Al trapianto", come: "Una manciata nella buca di piantagione, mescolato alla terra" },
+      { nome: "Macerato di consolida", quando: "Ogni 15 gg in fioritura", come: "Diluito 1:10 in acqua, alla base della pianta" },
+      { nome: "Cenere di legna", quando: "In fioritura/allegagione", come: "Piccole dosi (1 cucchiaio/pianta) per apportare potassio" },
+    ]
+  },
   { id: "zucchina", nome: "Zucchina", categoria: "orto", emoji: "🥒",
     descrizione: "Pianta molto produttiva. Raccogli i frutti giovani per stimolare nuova produzione.",
     semina: [4,5], trapianto: [5,6], raccolta: [6,7,8,9],
     spazio: "1 m tra piante", acqua: "alta", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 8, prezzoKg: 2.0  },
+    resaKg: 8, prezzoKg: 2.0,
+    giorniMaturazione: 55,
+    concimi: [
+      { nome: "Letame maturo o compost", quando: "Prima del trapianto", come: "Incorporato nel terreno (2-3 kg/mq)" },
+      { nome: "Macerato di ortica", quando: "Ogni 20 gg durante la crescita", come: "Diluito 1:10, distribuito alla base" },
+    ]
+  },
   { id: "insalata", nome: "Lattuga", categoria: "orto", emoji: "🥬",
     descrizione: "Cresce rapidamente. Semina scalare ogni 2-3 settimane per raccolto continuo.",
     semina: [2,3,4,5,8,9,10], trapianto: [3,4,5,9,10], raccolta: [4,5,6,7,10,11],
     spazio: "25 cm tra piante", acqua: "media", sole: "mezz'ombra",
     difficolta: "facile", vasoOk: true,
-    resaKg: 0.4, prezzoKg: 3.0  },
+    resaKg: 0.4, prezzoKg: 3.0,
+    giorniMaturazione: 55,
+    concimi: [
+      { nome: "Compost leggero", quando: "Prima del trapianto", come: "Una manciata per pianta, superficiale" },
+      { nome: "Macerato di ortica", quando: "Ogni 10-15 gg", come: "Diluito 1:20, apporta azoto per le foglie" },
+    ]
+  },
   { id: "basilico", nome: "Basilico", categoria: "orto", emoji: "🌿",
     descrizione: "Aromatica essenziale. Cima regolarmente per favorire la ramificazione e ritardare la fioritura.",
     semina: [4,5], trapianto: [5,6], raccolta: [6,7,8,9],
     spazio: "30 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 0.3, prezzoKg: 25.0  },
+    resaKg: 0.3, prezzoKg: 25.0,
+    giorniMaturazione: 35,
+    concimi: [
+      { nome: "Compost maturo", quando: "In piantagione", come: "Poco, non ama substrati troppo ricchi" },
+      { nome: "Macerato di ortica leggero", quando: "Ogni 20 gg", come: "Diluito 1:20, per foglie più profumate" },
+    ]
+  },
   { id: "peperone", nome: "Peperone", categoria: "orto", emoji: "🫑",
     descrizione: "Richiede calore e tempi lunghi. Sostieni i rami carichi di frutti con tutori.",
     semina: [2,3], trapianto: [5], raccolta: [7,8,9,10],
     spazio: "50 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 2, prezzoKg: 3.0  },
+    resaKg: 2, prezzoKg: 3.0,
+    giorniMaturazione: 90,
+    concimi: [
+      { nome: "Compost maturo", quando: "Al trapianto", come: "Manciata nella buca" },
+      { nome: "Macerato di consolida", quando: "In fioritura", come: "Diluito 1:10, ricco di potassio" },
+      { nome: "Cenere di legna", quando: "In fruttificazione", come: "Piccola dose mensile (1 cucchiaio)" },
+    ]
+  },
   { id: "melanzana", nome: "Melanzana", categoria: "orto", emoji: "🍆",
     descrizione: "Ama il caldo. Cimare la pianta dopo 4-5 foglie stimola la produzione laterale.",
     semina: [2,3], trapianto: [5], raccolta: [7,8,9,10],
     spazio: "60 cm tra piante", acqua: "alta", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 3, prezzoKg: 2.0  },
+    resaKg: 3, prezzoKg: 2.0,
+    giorniMaturazione: 85,
+    concimi: [
+      { nome: "Letame maturo", quando: "Prima del trapianto", come: "Incorporato abbondantemente (3 kg/mq)" },
+      { nome: "Macerato di consolida", quando: "Ogni 15 gg in fioritura", come: "Diluito 1:10" },
+    ]
+  },
   { id: "carota", nome: "Carota", categoria: "orto", emoji: "🥕",
     descrizione: "Richiede terreno soffice e profondo, privo di sassi. Diradare le piantine è essenziale.",
     semina: [3,4,5,6,7], trapianto: [], raccolta: [6,7,8,9,10],
     spazio: "5 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 0.12, prezzoKg: 1.8  },
+    resaKg: 0.12, prezzoKg: 1.8,
+    giorniMaturazione: 100,
+    concimi: [
+      { nome: "Compost stramaturo", quando: "2-3 mesi prima della semina", come: "Incorporato leggero; mai letame fresco (causa ramificazioni)" },
+      { nome: "Cenere di legna", quando: "Durante la crescita", come: "Spolverata per apporto potassio" },
+    ]
+  },
   { id: "cipolla", nome: "Cipolla", categoria: "orto", emoji: "🧅",
     descrizione: "Si pianta in bulbilli. Riduci le irrigazioni prima della raccolta per migliorare la conservazione.",
     semina: [2,3,9,10], trapianto: [2,3,10], raccolta: [6,7],
     spazio: "15 cm tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: false,
-    resaKg: 0.15, prezzoKg: 1.5  },
+    resaKg: 0.15, prezzoKg: 1.5,
+    giorniMaturazione: 120,
+    concimi: [
+      { nome: "Compost molto maturo", quando: "In pre-impianto", come: "Leggero; mai letame fresco" },
+      { nome: "Cenere di legna", quando: "A metà crescita", come: "Una spolverata per migliorare conservazione" },
+    ]
+  },
   { id: "fagiolino", nome: "Fagiolino", categoria: "orto", emoji: "🫘",
     descrizione: "Raccolta scalare. I fagiolini rampicanti richiedono tutori alti fino a 2 metri.",
     semina: [4,5,6,7], trapianto: [], raccolta: [6,7,8,9],
     spazio: "20 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 0.5, prezzoKg: 4.5  },
+    resaKg: 0.5, prezzoKg: 4.5,
+    giorniMaturazione: 60,
+    concimi: [
+      { nome: "Compost leggero", quando: "Pre-semina", come: "Poco: i legumi fissano azoto da soli" },
+      { nome: "Cenere di legna", quando: "In fioritura", come: "Spolverata per potassio" },
+    ]
+  },
   { id: "rosmarino", nome: "Rosmarino", categoria: "orto", emoji: "🌱",
     descrizione: "Aromatica perenne resistente alla siccità. Una volta avviata richiede pochissime cure.",
     semina: [3,4], trapianto: [4,5,9,10], raccolta: [1,2,3,4,5,6,7,8,9,10,11,12],
     spazio: "80 cm tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: true,
-    resaKg: 1, prezzoKg: 15.0  },
+    resaKg: 1, prezzoKg: 15.0,
+    giorniMaturazione: 180,
+    concimi: [
+      { nome: "Compost maturo", quando: "In piantagione", come: "Poco: predilige terreni poveri e drenati" },
+    ]
+  },
 
   // FRUTTETO
   { id: "limone", nome: "Limone", categoria: "frutteto", emoji: "🍋",
@@ -94,49 +155,89 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [3,4,10], raccolta: [11,12,1,2,3,4,5],
     spazio: "4 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: true,
-    resaKg: 30, prezzoKg: 2.5  },
+    resaKg: 30, prezzoKg: 2.5,
+    concimi: [
+      { nome: "Letame maturo", quando: "Fine inverno", come: "2-3 kg alla base, interrato leggero" },
+      { nome: "Concime per agrumi (naturale)", quando: "Primavera ed estate", come: "Seguendo dose prodotto; miscele con cornunghia" },
+      { nome: "Ferro (in chelato o lupini macerati)", quando: "A primavera se foglie ingialliscono", come: "Per prevenire clorosi ferrica, tipica degli agrumi" },
+    ]
+  },
   { id: "fico", nome: "Fico", categoria: "frutteto", emoji: "🫒",
     descrizione: "Albero robusto e rustico. Alcune varietà producono due volte: fioroni a giugno e fichi a agosto-settembre.",
     semina: [], trapianto: [10,11,2,3], raccolta: [6,8,9],
     spazio: "5 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: false,
-    resaKg: 40, prezzoKg: 4.0  },
+    resaKg: 40, prezzoKg: 4.0,
+    concimi: [
+      { nome: "Letame maturo", quando: "Fine autunno", come: "Una carriola distribuita sotto la chioma e interrata" },
+    ]
+  },
   { id: "olivo", nome: "Olivo", categoria: "frutteto", emoji: "🫒",
     descrizione: "Simbolo del Mediterraneo. Potatura a vaso ogni anno dopo la raccolta, molto longevo.",
     semina: [], trapianto: [3,4,10,11], raccolta: [10,11,12],
     spazio: "6 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 25, prezzoKg: 3.0  },
+    resaKg: 25, prezzoKg: 3.0,
+    concimi: [
+      { nome: "Letame maturo", quando: "Fine inverno", come: "3-5 kg/pianta distribuiti sotto la chioma" },
+      { nome: "Sansa/potature triturate (pacciamatura)", quando: "In autunno", come: "Al piede come apporto organico lento" },
+    ]
+  },
   { id: "pesco", nome: "Pesco", categoria: "frutteto", emoji: "🍑",
     descrizione: "Albero da frutto di vita breve (15-20 anni). Richiede potatura invernale accurata ogni anno.",
     semina: [], trapianto: [11,12,1,2], raccolta: [6,7,8],
     spazio: "5 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 50, prezzoKg: 2.5  },
+    resaKg: 50, prezzoKg: 2.5,
+    concimi: [
+      { nome: "Letame maturo", quando: "Fine autunno", come: "2-3 kg/pianta, interrato leggero sotto chioma" },
+      { nome: "Cenere di legna", quando: "Pre-fioritura", come: "1-2 kg distribuiti al piede, per potassio e pH" },
+    ]
+  },
   { id: "vite", nome: "Vite", categoria: "frutteto", emoji: "🍇",
     descrizione: "Richiede palo o pergolato. Potatura secca in inverno e potatura verde in estate per la qualità dei grappoli.",
     semina: [], trapianto: [11,12,1,2,3], raccolta: [8,9,10],
     spazio: "2 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "difficile", vasoOk: false,
-    resaKg: 8, prezzoKg: 3.5  },
+    resaKg: 8, prezzoKg: 3.5,
+    concimi: [
+      { nome: "Letame maturo o compost", quando: "Fine inverno", come: "1-2 kg/pianta interrati leggero" },
+      { nome: "Sovescio di leguminose", quando: "Autunno-inverno", come: "Semina trifoglio/favino tra i filari, si interra in primavera" },
+    ]
+  },
   { id: "melo", nome: "Melo", categoria: "frutteto", emoji: "🍎",
     descrizione: "Preferisce climi freschi ma esistono varietà adatte al Sud. Diradare i frutti a giugno per pezzature migliori.",
     semina: [], trapianto: [11,12,1,2], raccolta: [8,9,10],
     spazio: "4 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 60, prezzoKg: 2.0  },
+    resaKg: 60, prezzoKg: 2.0,
+    concimi: [
+      { nome: "Letame maturo", quando: "Autunno-inverno", come: "3-4 kg/pianta sotto la chioma" },
+      { nome: "Compost", quando: "Primavera", come: "Manciata intorno al piede" },
+    ]
+  },
   { id: "ciliegio", nome: "Ciliegio", categoria: "frutteto", emoji: "🍒",
     descrizione: "Fioritura spettacolare a primavera. Proteggi i frutti con reti antiuccello prima della maturazione.",
     semina: [], trapianto: [11,12,1,2], raccolta: [5,6],
     spazio: "6 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 30, prezzoKg: 6.0  },
+    resaKg: 30, prezzoKg: 6.0,
+    concimi: [
+      { nome: "Letame maturo", quando: "Fine autunno", come: "2-3 kg/pianta sotto la chioma" },
+      { nome: "Cenere di legna", quando: "Dopo la raccolta", come: "Spolverata leggera per potassio" },
+    ]
+  },
   { id: "albicocco", nome: "Albicocco", categoria: "frutteto", emoji: "🍑",
     descrizione: "Fiorisce molto presto, attenzione alle gelate tardive. Produce abbondantemente in anni alterni.",
     semina: [], trapianto: [11,12,1,2], raccolta: [6,7],
     spazio: "5 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
-    resaKg: 40, prezzoKg: 3.0  },
+    resaKg: 40, prezzoKg: 3.0,
+    concimi: [
+      { nome: "Letame maturo", quando: "Fine autunno", come: "2-3 kg/pianta distribuiti sotto la chioma" },
+      { nome: "Compost maturo", quando: "Primavera", come: "Leggero rinforzo prima della ripresa vegetativa" },
+    ]
+  },
 ];
 
 const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
@@ -154,7 +255,7 @@ const TIPI_APPEZZAMENTO = [
 // Un appezzamento "in vaso" cambia la logica di irrigazione
 const IN_VASO = new Set(["balcone", "terrazzo"]);
 
-const APP_VERSION = "1.5.7";
+const APP_VERSION = "1.6.0";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -216,6 +317,24 @@ const NotificationHelper = {
 function dayTaskKey(date, tipo, plantId) {
   const iso = date instanceof Date ? date.toISOString().slice(0, 10) : date;
   return `${iso}__${tipo}__${plantId}`;
+}
+
+// Restituisce true se la pianta dell'utente ha raggiunto la maturazione
+// per l'orto annuale (giorniMaturazione dalla data di piantagione).
+// Per frutteti usa la logica età (resaPerEta > 0).
+// Retrocompatibilità: se non ho dati, restituisco true (comportamento vecchio).
+function isReadyForHarvest(plant, userPlant) {
+  if (!plant) return false;
+  if (plant.categoria === "ornamentale") return false; // non si "raccolgono"
+  if (plant.categoria === "frutteto") {
+    return resaPerEta(plant, userPlant) > 0;
+  }
+  // orto annuale
+  if (!userPlant.dataPiantagione || !plant.giorniMaturazione) return true; // comportamento vecchio
+  const piantato = new Date(userPlant.dataPiantagione);
+  const oggi = new Date();
+  const giorni = Math.floor((oggi - piantato) / (1000 * 60 * 60 * 24));
+  return giorni >= plant.giorniMaturazione;
 }
 
 // Moltiplicatore di resa per frutteto in base all'età (anni dall'impianto).
@@ -415,6 +534,78 @@ const TECNICHE = [
   },
 ];
 
+// ============================================================
+// INNESTI — tecniche principali di innesto per frutteto
+// ============================================================
+const INNESTI = [
+  {
+    id: "scudetto",
+    nome: "Innesto a gemma (scudetto)",
+    difficolta: "media",
+    icona: "🔬",
+    periodo: "Luglio - Agosto",
+    descrizione: "Il più diffuso per fruttiferi e agrumi. Si preleva una singola gemma con un piccolo 'scudetto' di corteccia dal portamarze e la si inserisce sotto la corteccia del portainnesto, incidendo una T.",
+    comeFare: "1) Pratica un taglio a T sulla corteccia del portainnesto, in un punto liscio del tronco. 2) Preleva dal marza un occhio (gemma) con uno scudetto di corteccia lungo 2-3 cm. 3) Solleva i lembi del taglio a T con la lama e inserisci lo scudetto. 4) Lega stretto con rafia elastica, lasciando fuori la gemma. 5) Dopo 2-3 settimane verifica l'attecchimento.",
+    piante: "Pesco, albicocco, ciliegio, melo, pero, agrumi, olivo (meno frequente)",
+    claim: "Alta percentuale di riuscita, poco materiale vegetale richiesto",
+  },
+  {
+    id: "spacco",
+    nome: "Innesto a marza (spacco)",
+    difficolta: "facile",
+    icona: "✂️",
+    periodo: "Fine inverno (Febbraio-Marzo), prima della ripresa",
+    descrizione: "Il più intuitivo per principianti: si apre in due con un colpo d'ascia il portainnesto tagliato e si inseriscono una o due marze (rametti con 2-3 gemme) a cuneo.",
+    comeFare: "1) Taglia netto il portainnesto a circa 50-80 cm da terra. 2) Con scalpello o roncola, apri il taglio a metà (spacco di 5-6 cm). 3) Prepara la marza: rametto di 15 cm con 2-3 gemme, tagliato a cuneo in basso. 4) Inserisci 1 o 2 marze nello spacco facendo combaciare il cambio (strato verde sotto la corteccia). 5) Sigilla con mastice per innesti e lega.",
+    piante: "Melo, pero, pesco, albicocco, olivo, vite (rinnovo piante adulte)",
+    claim: "Tecnica robusta per riprendere piante vecchie o cambiar varietà",
+  },
+  {
+    id: "corona",
+    nome: "Innesto a corona",
+    difficolta: "media",
+    icona: "👑",
+    periodo: "Primavera (Marzo-Aprile), a fine ripresa",
+    descrizione: "Variante dell'innesto a spacco, adatta a portainnesti di grande diametro (oltre 5 cm). Le marze si inseriscono tra corteccia e legno senza aprire il tronco, disposte a corona.",
+    comeFare: "1) Taglia netto il portainnesto. 2) Incidi la corteccia verticalmente (non il legno) in 3-4 punti equidistanti. 3) Solleva delicatamente la corteccia con la lama. 4) Inserisci 3-4 marze (a cuneo, 2-3 gemme ciascuna) tra corteccia e legno. 5) Lega saldamente e sigilla con mastice.",
+    piante: "Alberi adulti di melo, pero, noce, castagno, olivo",
+    claim: "Ideale per reinnestare esemplari con tronco grosso",
+  },
+  {
+    id: "triangolo",
+    nome: "Innesto a triangolo",
+    difficolta: "difficile",
+    icona: "🔺",
+    periodo: "Fine inverno (Febbraio-Marzo)",
+    descrizione: "Tecnica di precisione: si ricava un incavo triangolare nel portainnesto e vi si inserisce una marza sagomata a triangolo corrispondente. Massima aderenza tra i tessuti.",
+    comeFare: "1) Taglia il portainnesto netto. 2) Con attrezzo specifico (o coltello affilato), ricava un incavo triangolare profondo 3-4 cm sul lato. 3) Sagoma la marza a triangolo in modo complementare. 4) Inserisci facendo combaciare con precisione. 5) Lega saldamente e sigilla.",
+    piante: "Soprattutto fruttiferi con tronco medio-grande",
+    claim: "Alta percentuale di attecchimento, ma richiede precisione",
+  },
+  {
+    id: "ponte",
+    nome: "Innesto a ponte (salvataggio)",
+    difficolta: "difficile",
+    icona: "🌉",
+    periodo: "Primavera (Marzo-Aprile)",
+    descrizione: "Non per propagazione ma per salvare alberi con cortecce rovinate da roditori, gelo o tagli accidentali. Marze-ponte collegano la zona sana sopra e sotto la lesione, ripristinando la circolazione linfatica.",
+    comeFare: "1) Pulisci i bordi della zona rovinata fino al legno sano. 2) Prepara marze diritte lunghe quanto la lesione + 5 cm, tagliate a cuneo entrambi i lati. 3) Incidi piccole T nella corteccia sana sopra e sotto. 4) Inserisci ogni marza con orientamento originale (gemme verso alto), a ponte sulla ferita. 5) Ne servono 3-6 distribuite. 6) Lega e sigilla.",
+    piante: "Qualsiasi albero da frutto danneggiato",
+    claim: "Ultima spiaggia per salvare piante compromesse",
+  },
+  {
+    id: "gemma-dormiente",
+    nome: "Innesto a gemma dormiente",
+    difficolta: "media",
+    icona: "😴",
+    periodo: "Fine estate (Agosto-Settembre)",
+    descrizione: "Simile allo scudetto ma la gemma resta 'addormentata' fino alla primavera successiva. Tecnica tradizionale per innestare giovani piante di 1-2 anni in vivaio, senza interrompere la stagione in corso.",
+    comeFare: "1) Preleva una gemma con scudetto da rami dell'anno. 2) Inseriscila come per l'innesto a scudetto. 3) Lega stretto. 4) Non tagliare sopra la gemma: resterà dormiente fino a primavera. 5) A marzo, quando la gemma parte, taglia il portainnesto appena sopra l'innesto.",
+    piante: "Fruttiferi in vivaio, rose, olivo",
+    claim: "Permette di innestare in un anno e sfruttare la stagione successiva",
+  },
+];
+
 
 // ============================================================
 // MICROCLIMA — calcolo shift stagionale basato su latitudine e altitudine
@@ -538,6 +729,17 @@ function generateTasksForPlant(userPlant, appezzamento, catalog = PLANT_CATALOG)
   raccolta.forEach(m => {
     // per le ornamentali non ha senso un "task di raccolta"
     if (plant.categoria === "ornamentale") return;
+    // Per orto annuale: mostro il task solo dai mesi in cui la pianta sarà matura.
+    // Se ho dataPiantagione + giorniMaturazione, calcolo il mese stimato di prima raccolta.
+    if (plant.categoria === "orto" && userPlant.dataPiantagione && plant.giorniMaturazione) {
+      const piantato = new Date(userPlant.dataPiantagione);
+      const maturazione = new Date(piantato);
+      maturazione.setDate(maturazione.getDate() + plant.giorniMaturazione);
+      // se il mese della raccolta calendario è PRIMA del mese di maturazione stimato, skip
+      const meseCorrente = new Date(year, m - 1, 1);
+      const meseMaturazione = new Date(maturazione.getFullYear(), maturazione.getMonth(), 1);
+      if (meseCorrente < meseMaturazione) return;
+    }
     tasks.push({
       type: "raccolta", icon: "🧺", mese: m, year,
       titolo: `Raccolta ${plant.nome}`,
@@ -631,6 +833,7 @@ const VIEWS = [
   { id: "stagione", label: "Cosa piantare ora", shortLabel: "Stagione", icon: Leaf },
   { id: "catalogo", label: "Catalogo piante", shortLabel: "Catalogo", icon: BookOpen },
   { id: "tecniche", label: "Tecniche & hack", shortLabel: "Tecniche", icon: Lightbulb },
+  { id: "innesti", label: "Innesti", shortLabel: "Innesti", icon: Scissors },
   { id: "pacciamatura", label: "Pacciamatura", shortLabel: "Pacciame", icon: Layers },
   { id: "appezzamenti", label: "Appezzamenti", shortLabel: "Aree", icon: MapPin },
 ];
@@ -811,7 +1014,7 @@ export default function VerdeGuida() {
   };
 
   // ========== PIANTE ==========
-  const addPlant = (catalogPlant, quantita, note, appezzamentoId, annoImpianto) => {
+  const addPlant = (catalogPlant, quantita, note, appezzamentoId, annoImpianto, dataPiantagione) => {
     const newPlant = {
       id: `plant_${Date.now()}`,
       plantId: catalogPlant.id,
@@ -819,6 +1022,7 @@ export default function VerdeGuida() {
       note: note || "",
       appezzamentoId: appezzamentoId || activeAppezzamentoId,
       annoImpianto: annoImpianto || null,
+      dataPiantagione: dataPiantagione || null,
       addedAt: new Date().toISOString(),
     };
     savePlants([...userPlants, newPlant]);
@@ -1005,7 +1209,7 @@ export default function VerdeGuida() {
 
       if (giornoIdx === 2 && semina.includes(mese)) addTask("semina");
       if (giornoIdx === 2 && trapianto.includes(mese)) addTask("trapianto");
-      if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") addTask("raccolta");
+      if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale" && isReadyForHarvest(plant, up)) addTask("raccolta");
 
       const fabbisogno = plant.acqua;
       const mesiIrrigare = fabbisogno === "alta" ? [4,5,6,7,8,9,10]
@@ -1064,7 +1268,7 @@ export default function VerdeGuida() {
 
           if (giornoIdx === 2 && semina.includes(mese)) tasksOggi.push(`semina ${plant.nome}`);
           if (giornoIdx === 2 && trapianto.includes(mese)) tasksOggi.push(`trapianta ${plant.nome}`);
-          if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") tasksOggi.push(`raccogli ${plant.nome}`);
+          if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale" && isReadyForHarvest(plant, up)) tasksOggi.push(`raccogli ${plant.nome}`);
           const fab = plant.acqua;
           const mesiI = fab === "alta" ? [4,5,6,7,8,9,10] : fab === "media" ? [4,5,6,7,8,9] : [6,7,8];
           if (mesiI.includes(mese)) {
@@ -1314,6 +1518,8 @@ export default function VerdeGuida() {
 
         {view === "tecniche" && <TecnicheView />}
 
+        {view === "innesti" && <InnestiView />}
+
         {view === "pacciamatura" && <PacciamaturaView activeApp={activeApp}/>}
 
         {view === "appezzamenti" && <AppezzamentiView
@@ -1480,37 +1686,9 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
         </section>
       )}
 
-      {/* RIEPILOGO A COLPO D'OCCHIO */}
+      {/* RENDITA DEL TUO ORTO — collassabile con info */}
       {userPlants.length > 0 && (
-        <section className="fade-up">
-          <div className="card" style={{ background: "var(--c-ink)", color: "var(--c-cream)", borderColor: "var(--c-ink)" }}>
-            <div className="flex items-baseline justify-between flex-wrap gap-3 mb-4">
-              <div>
-                <p className="serif italic text-xs opacity-70">— il tuo orto in sintesi —</p>
-                <h3 className="serif font-bold text-2xl">Cosa hai piantato</h3>
-              </div>
-              {riepilogo.valoreTot > 0 && (
-                <div className="text-right">
-                  <p className="text-xs opacity-70 serif italic">Valore stimato raccolto</p>
-                  <p className="display text-3xl" style={{ color: "var(--c-ochre)" }}>€ {riepilogo.valoreTot.toFixed(0)}</p>
-                  <p className="text-[10px] opacity-50">~{riepilogo.kgTot.toFixed(1)} kg · prezzi mercato medi</p>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {riepilogo.items.map(({ plant, quantita, valore }) => {
-                return (
-                  <div key={plant.id} className="px-3 py-2 rounded-full flex items-center gap-2" style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
-                    <span className="text-lg">{plant.emoji}</span>
-                    <span className="font-bold text-sm">{plant.nome}</span>
-                    <span className="text-xs opacity-70">× {quantita}</span>
-                    {valore > 0 && <span className="text-[10px] italic" style={{ color: "var(--c-olive-dark)" }}>~€{valore.toFixed(0)}</span>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+        <RenditaSection riepilogo={riepilogo} userPlantsCount={userPlants.length}/>
       )}
 
       <div className="grid md:grid-cols-3 gap-6">
@@ -1553,6 +1731,40 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
                   <div className="text-xs opacity-70">
                     <span className="serif italic">{cat.categoria === "ornamentale" ? "Fioritura" : "Raccolta"}:</span> {cat.raccolta.map(m => MESI[m-1].slice(0,3)).join(", ") || "—"}
                   </div>
+
+                  {/* Info maturazione per ortaggi annuali */}
+                  {cat.categoria === "orto" && up.dataPiantagione && cat.giorniMaturazione && (() => {
+                    const pDate = new Date(up.dataPiantagione);
+                    const mDate = new Date(pDate);
+                    mDate.setDate(mDate.getDate() + cat.giorniMaturazione);
+                    const giorniMancanti = Math.ceil((mDate - new Date()) / (1000*60*60*24));
+                    const matura = giorniMancanti <= 0;
+                    return (
+                      <div className="mt-2 text-[11px]" style={{ color: matura ? "var(--c-olive-dark)" : "var(--c-ink)" }}>
+                        <p className="serif italic opacity-80">
+                          🌱 Piantata il {pDate.toLocaleDateString("it-IT", { day: "numeric", month: "short" })}
+                        </p>
+                        {matura ? (
+                          <p className="font-semibold" style={{ color: "var(--c-olive-dark)" }}>✓ Pronta per il raccolto</p>
+                        ) : (
+                          <p className="opacity-70">Matura tra {giorniMancanti} giorni ({mDate.toLocaleDateString("it-IT", { day: "numeric", month: "short" })})</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Info età per frutteto */}
+                  {cat.categoria === "frutteto" && up.annoImpianto && (() => {
+                    const eta = new Date().getFullYear() - up.annoImpianto;
+                    const mult = resaPerEta(cat, up);
+                    return (
+                      <p className="mt-2 text-[11px] serif italic opacity-70">
+                        🌳 Impiantata nel {up.annoImpianto} · {eta} {eta === 1 ? "anno" : "anni"}
+                        {mult < 1 && ` · resa ${(mult * 100).toFixed(0)}%`}
+                      </p>
+                    );
+                  })()}
+
                   {up.note && <p className="text-xs mt-2 italic opacity-60">"{up.note}"</p>}
                   <p className="text-[10px] mt-2 opacity-40 serif italic">tocca per modificare →</p>
                 </div>
@@ -1943,6 +2155,16 @@ function CatalogView({ fullCatalog, customPlants, onSelect, userPlants, activeAp
                 <span className="chip">☀ {p.sole}</span>
                 <span className="chip">{p.difficolta}</span>
               </div>
+              {p.concimi && p.concimi.length > 0 && (
+                <p className="text-[10px] italic opacity-60 mt-2 line-clamp-1">
+                  🌿 Concimi: {p.concimi.slice(0, 3).map(c => c.nome.toLowerCase()).join(", ")}
+                </p>
+              )}
+              {p.giorniMaturazione > 0 && p.categoria === "orto" && (
+                <p className="text-[10px] italic opacity-60 mt-0.5">
+                  ⏱️ Matura in ~{p.giorniMaturazione} giorni
+                </p>
+              )}
               <div className="hairline my-3"></div>
               {notFitVaso ? (
                 <p className="text-xs italic opacity-60">Non adatta a coltivazione in vaso</p>
@@ -2236,6 +2458,7 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
   const [appezzamentoId, setAppezzamentoId] = useState(defaultAppezzamentoId || appezzamenti[0]?.id);
   const [confirmOutOfSeason, setConfirmOutOfSeason] = useState(false);
   const [annoImpianto, setAnnoImpianto] = useState(""); // anno di impianto (solo per frutteto)
+  const [dataPiantagione, setDataPiantagione] = useState(() => new Date().toISOString().slice(0, 10)); // YYYY-MM-DD, default oggi
 
   const selectedApp = appezzamenti.find(a => a.id === appezzamentoId);
   const irrigazione = selectedApp ? calcolaIrrigazione(plant, selectedApp.tipo, currentMonth + 1) : null;
@@ -2409,6 +2632,30 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
           </label>
         )}
 
+        {/* Data piantagione - solo per ortaggi annuali (no ornamentali, no frutteto) */}
+        {plant.categoria === "orto" && (
+          <label className="block mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Data di semina/trapianto</span>
+            <input type="date" value={dataPiantagione}
+              onChange={(e) => setDataPiantagione(e.target.value)}
+              max={new Date().toISOString().slice(0,10)}
+              className="w-full mt-1 px-3 py-2 rounded-lg text-sm" style={{ border: "1.5px solid var(--c-border)", background: "var(--c-cream)", fontSize: "16px" }}/>
+            {plant.giorniMaturazione && dataPiantagione && (() => {
+              const pDate = new Date(dataPiantagione);
+              const mDate = new Date(pDate);
+              mDate.setDate(mDate.getDate() + plant.giorniMaturazione);
+              const opts = { day: "numeric", month: "long", year: "numeric" };
+              const giorniMancanti = Math.ceil((mDate - new Date()) / (1000*60*60*24));
+              return (
+                <p className="text-[11px] opacity-70 italic mt-1">
+                  🌱 Matura in circa <b>{plant.giorniMaturazione} giorni</b> → raccolta prevista dal <b>{mDate.toLocaleDateString("it-IT", opts)}</b>
+                  {giorniMancanti > 0 ? ` (tra ${giorniMancanti} giorni)` : ` (già matura!)`}
+                </p>
+              );
+            })()}
+          </label>
+        )}
+
         <label className="block mb-5">
           <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Note personali (opzionale)</span>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows="2"
@@ -2419,7 +2666,7 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
         <div className="flex gap-2">
           <button className="btn-ghost flex-1" onClick={onClose}>Annulla</button>
           <button className="btn-primary flex-1 justify-center"
-            onClick={() => onAdd(plant, quantita, note, appezzamentoId, annoImpianto ? parseInt(annoImpianto) : null)}
+            onClick={() => onAdd(plant, quantita, note, appezzamentoId, annoImpianto ? parseInt(annoImpianto) : null, plant.categoria === "orto" ? dataPiantagione : null)}
             disabled={fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason}
             style={fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason ? { opacity: 0.5, cursor: "not-allowed" } : {}}>
             <Plus size={14}/> {fuoriStagioneEffettivo && !hasSerra && !confirmOutOfSeason ? "Fuori stagione" : "Aggiungi"}
@@ -2439,6 +2686,7 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
   const [note, setNote] = useState(userPlant.note || "");
   const [appezzamentoId, setAppezzamentoId] = useState(userPlant.appezzamentoId);
   const [annoImpianto, setAnnoImpianto] = useState(userPlant.annoImpianto || "");
+  const [dataPiantagione, setDataPiantagione] = useState(userPlant.dataPiantagione || "");
   const [problemi, setProblemi] = useState(userPlant.problemi || []);
   const [showProblemaForm, setShowProblemaForm] = useState(false);
   if (!plant) return null;
@@ -2482,12 +2730,17 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
         {/* TABS */}
         <div className="flex gap-1 mb-4 p-1 rounded-full" style={{ background: "var(--c-cream)", border: "1.5px solid var(--c-border)" }}>
           <button onClick={() => setTab("info")}
-            className="flex-1 py-2 px-3 rounded-full text-sm font-semibold transition"
+            className="flex-1 py-2 px-2 rounded-full text-xs font-semibold transition"
             style={{ background: tab === "info" ? "var(--c-ink)" : "transparent", color: tab === "info" ? "var(--c-cream)" : "var(--c-ink)", cursor: "pointer" }}>
             Info & cure
           </button>
+          <button onClick={() => setTab("concimi")}
+            className="flex-1 py-2 px-2 rounded-full text-xs font-semibold transition"
+            style={{ background: tab === "concimi" ? "var(--c-ink)" : "transparent", color: tab === "concimi" ? "var(--c-cream)" : "var(--c-ink)", cursor: "pointer" }}>
+            Concimi
+          </button>
           <button onClick={() => setTab("problemi")}
-            className="flex-1 py-2 px-3 rounded-full text-sm font-semibold transition flex items-center justify-center gap-1"
+            className="flex-1 py-2 px-2 rounded-full text-xs font-semibold transition flex items-center justify-center gap-1"
             style={{ background: tab === "problemi" ? "var(--c-ink)" : "transparent", color: tab === "problemi" ? "var(--c-cream)" : "var(--c-ink)", cursor: "pointer" }}>
             Problemi {problemiAttivi > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: "var(--c-terra)", color: "var(--c-cream)" }}>{problemiAttivi}</span>}
           </button>
@@ -2550,11 +2803,87 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
               </label>
             )}
 
+            {/* Data piantagione - solo per ortaggi annuali */}
+            {plant.categoria === "orto" && (
+              <label className="block mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Data di semina/trapianto</span>
+                <input type="date" value={dataPiantagione}
+                  onChange={(e) => setDataPiantagione(e.target.value)}
+                  max={new Date().toISOString().slice(0,10)}
+                  className="w-full mt-1 px-3 py-2 rounded-lg text-sm" style={{ border: "1.5px solid var(--c-border)", background: "var(--c-cream)", fontSize: "16px" }}/>
+                {plant.giorniMaturazione && dataPiantagione && (() => {
+                  const pDate = new Date(dataPiantagione);
+                  const mDate = new Date(pDate);
+                  mDate.setDate(mDate.getDate() + plant.giorniMaturazione);
+                  const opts = { day: "numeric", month: "long", year: "numeric" };
+                  const giorniMancanti = Math.ceil((mDate - new Date()) / (1000*60*60*24));
+                  return (
+                    <p className="text-[11px] opacity-70 italic mt-1">
+                      🌱 Piantata il <b>{pDate.toLocaleDateString("it-IT", opts)}</b>. Raccolta prevista dal <b>{mDate.toLocaleDateString("it-IT", opts)}</b>
+                      {giorniMancanti > 0 ? ` (tra ${giorniMancanti} giorni)` : " ✓ già matura"}
+                    </p>
+                  );
+                })()}
+                {!dataPiantagione && (
+                  <p className="text-[11px] opacity-60 italic mt-1">
+                    Se vuota, la raccolta viene suggerita secondo il calendario generale (non per questa pianta specifica).
+                  </p>
+                )}
+              </label>
+            )}
+
             <label className="block mb-5">
               <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Note personali</span>
               <textarea value={note} onChange={(e) => setNote(e.target.value)} rows="2"
                 className="w-full mt-1 px-3 py-2 rounded-lg text-sm" style={{ border: "1.5px solid var(--c-border)", background: "var(--c-cream)" }}/>
             </label>
+          </div>
+        )}
+
+        {tab === "concimi" && (
+          <div className="space-y-3 mb-5">
+            <div className="card p-3" style={{ background: "var(--c-cream)" }}>
+              <p className="text-sm serif italic opacity-80">
+                🌿 Consigli di concimazione biologica per {plant.nome.toLowerCase()}.
+              </p>
+            </div>
+
+            {(!plant.concimi || plant.concimi.length === 0) && (
+              <div className="card text-center py-8 opacity-60">
+                <p className="text-4xl mb-2">🌿</p>
+                <p className="serif italic text-sm">Nessun consiglio di concimazione specifico disponibile per questa pianta.</p>
+                {plant.custom && (
+                  <p className="text-xs mt-3 opacity-70">Per le piante custom puoi aggiungere i concimi modificandola dal Catalogo.</p>
+                )}
+              </div>
+            )}
+
+            {plant.concimi && plant.concimi.map((c, i) => (
+              <div key={i} className="card" style={{ background: "var(--c-bg)", borderLeft: "4px solid var(--c-olive)" }}>
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl flex-shrink-0">🌿</div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="serif font-bold text-base">{c.nome}</h4>
+                    <div className="mt-2 space-y-1.5 text-sm">
+                      <p>
+                        <span className="text-[10px] uppercase tracking-wider opacity-60 font-bold mr-1">Quando:</span>
+                        {c.quando}
+                      </p>
+                      <p>
+                        <span className="text-[10px] uppercase tracking-wider opacity-60 font-bold mr-1">Come:</span>
+                        {c.come}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="card p-3 mt-4" style={{ background: "var(--c-olive)", color: "var(--c-cream)", borderColor: "var(--c-olive)" }}>
+              <p className="text-xs serif italic">
+                💡 <b>Regola d'oro:</b> meglio poco e spesso che tanto in una volta. I concimi naturali agiscono lentamente e sostengono la pianta senza stressarla.
+              </p>
+            </div>
           </div>
         )}
 
@@ -2610,7 +2939,7 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
           </button>
           <button className="btn-ghost flex-1" onClick={onClose}>Annulla</button>
           <button className="btn-primary flex-1 justify-center"
-            onClick={() => onSave(userPlant.id, { quantita, note, appezzamentoId, problemi, annoImpianto: annoImpianto ? parseInt(annoImpianto) : null })}>
+            onClick={() => onSave(userPlant.id, { quantita, note, appezzamentoId, problemi, annoImpianto: annoImpianto ? parseInt(annoImpianto) : null, dataPiantagione: dataPiantagione || null })}>>
             Salva
           </button>
         </div>
@@ -2815,6 +3144,82 @@ function TecnicheView() {
 }
 
 // ============================================================
+// VIEW: INNESTI — tecniche di innesto per frutteto
+// ============================================================
+function InnestiView() {
+  const [expanded, setExpanded] = useState(null);
+
+  return (
+    <div className="fade-up">
+      <div className="flex items-center gap-3 mb-2">
+        <Scissors size={32} style={{ color: "var(--c-terra)" }}/>
+        <h2 className="display text-4xl">Innesti</h2>
+      </div>
+      <p className="serif italic opacity-70 mb-8 max-w-2xl">
+        L'arte antica di unire due piante in una. Serve a propagare varietà pregiate, rigenerare alberi adulti o salvare piante danneggiate.
+      </p>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {INNESTI.map((t, i) => {
+          const isOpen = expanded === t.id;
+          return (
+            <div key={t.id} className="card fade-up cursor-pointer" style={{ animationDelay: `${i * 60}ms` }}
+              onClick={() => setExpanded(isOpen ? null : t.id)}>
+              <div className="flex items-start gap-3">
+                <div className="text-4xl">{t.icona}</div>
+                <div className="flex-1">
+                  <h3 className="serif font-bold text-xl">{t.nome}</h3>
+                  <p className="serif italic text-sm opacity-70 mt-0.5">{t.claim}</p>
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    <span className="chip">{t.difficolta}</span>
+                    <span className="chip" style={{ background: "var(--c-cream)" }}>📅 {t.periodo}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm opacity-80 leading-relaxed mt-3">{t.descrizione}</p>
+
+              {isOpen && (
+                <div className="mt-4 pt-4 space-y-3" style={{ borderTop: "1px solid var(--c-border)" }}>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold">Come fare</p>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ whiteSpace: "pre-line" }}>{t.comeFare}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold">Piante adatte</p>
+                    <p className="text-xs mt-1">{t.piante}</p>
+                  </div>
+                </div>
+              )}
+
+              {!isOpen && (
+                <p className="text-[10px] mt-3 opacity-40 serif italic">tocca per i passi →</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="card mt-8" style={{ background: "var(--c-olive)", color: "var(--c-cream)", borderColor: "var(--c-olive)" }}>
+        <div className="flex items-start gap-3">
+          <Lightbulb size={22} className="flex-shrink-0 mt-0.5"/>
+          <div>
+            <p className="serif font-bold text-lg">Regole d'oro dell'innesto</p>
+            <ul className="text-sm space-y-1.5 mt-2 opacity-90">
+              <li>• Usa sempre <b>attrezzi affilati e puliti</b> (coltello da innesto dedicato o lame sterilizzate)</li>
+              <li>• Il <b>cambio verde</b> (strato sotto la corteccia) del portainnesto e della marza devono combaciare</li>
+              <li>• Proteggi gli innesti dal sole diretto con rafia o mastice per 2-3 settimane</li>
+              <li>• Raccogli marze in riposo vegetativo (Dicembre-Gennaio) e conservale al fresco</li>
+              <li>• Innesta solo su piante sane e ben irrigate</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // VIEW: PACCIAMATURA
 // ============================================================
 function PacciamaturaView({ activeApp }) {
@@ -2960,10 +3365,12 @@ Restituisci SOLO un oggetto JSON valido (no testo prima o dopo, no markdown, no 
   "spazio": "stringa tipo '30 cm tra piante' o '1 m tra piante'",
   "vasoOk": true o false (se è adatta alla coltivazione in vaso),
   "resaKg": numero (kg prodotti per pianta in una stagione; 0 per ornamentali o piante non edibili),
-  "prezzoKg": numero (prezzo medio di mercato al dettaglio in Italia €/kg nel 2025; 0 per ornamentali)
+  "prezzoKg": numero (prezzo medio di mercato al dettaglio in Italia €/kg nel 2025; 0 per ornamentali),
+  "giorniMaturazione": numero intero (giorni dalla semina/trapianto alla prima raccolta per orto annuale; 0 per ornamentali e frutteto pluriennale),
+  "concimi": [array di 2-4 oggetti {"nome": "nome del concime naturale", "quando": "periodo es. 'al trapianto' o 'ogni 15 gg in fioritura'", "come": "istruzione pratica es. 'una manciata nella buca'"}]
 }
 
-Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali resaKg e prezzoKg devono essere 0. Usa la tua conoscenza delle piante per il clima mediterraneo italiano.`;
+Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali resaKg/prezzoKg/giorniMaturazione devono essere 0. Per i concimi privilegia biologici/naturali: compost, letame maturo, macerati di ortica/consolida, cenere di legna, sovescio. Usa la tua conoscenza delle piante per il clima mediterraneo italiano.`;
 
     try {
       const res = await fetch(CLAUDE_API_ENDPOINT, {
@@ -3022,6 +3429,14 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali r
         vasoOk: typeof parsed.vasoOk === "boolean" ? parsed.vasoOk : true,
         resaKg: typeof parsed.resaKg === "number" && parsed.resaKg > 0 ? parsed.resaKg : 0,
         prezzoKg: typeof parsed.prezzoKg === "number" && parsed.prezzoKg > 0 ? parsed.prezzoKg : 0,
+        giorniMaturazione: typeof parsed.giorniMaturazione === "number" && parsed.giorniMaturazione > 0 ? Math.round(parsed.giorniMaturazione) : 0,
+        concimi: Array.isArray(parsed.concimi)
+          ? parsed.concimi.filter(c => c && typeof c === "object" && c.nome).map(c => ({
+              nome: String(c.nome).slice(0, 80),
+              quando: String(c.quando || "").slice(0, 120),
+              come: String(c.come || "").slice(0, 200),
+            })).slice(0, 6)
+          : [],
       };
 
       setForm(safe);
@@ -3046,6 +3461,8 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali r
         vasoOk: true,
         resaKg: 0,
         prezzoKg: 0,
+        giorniMaturazione: 0,
+        concimi: [],
       });
     }
     setSearching(false);
@@ -3248,6 +3665,80 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Per le ornamentali r
                 </p>
               </div>
             )}
+
+            {/* Giorni di maturazione: solo per orto annuale */}
+            {form.categoria === "orto" && (
+              <div className="card p-3" style={{ background: "var(--c-cream)" }}>
+                <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold mb-2">Tempo alla raccolta</p>
+                <label className="block">
+                  <span className="text-[11px] opacity-70">Giorni dalla semina/trapianto alla prima raccolta</span>
+                  <input type="number" step="1" min="0" max="365"
+                    value={form.giorniMaturazione || ""}
+                    onChange={(e) => set("giorniMaturazione", parseInt(e.target.value) || 0)}
+                    placeholder="Es: 80"
+                    className="w-full mt-0.5 px-2 py-1.5 rounded text-sm"
+                    style={{ border: "1.5px solid var(--c-border)", background: "white" }}/>
+                </label>
+                <p className="text-[10px] italic opacity-60 mt-2">
+                  L'app userà questo dato per segnalarti la raccolta solo dopo il tempo di maturazione dalla data di piantagione.
+                </p>
+              </div>
+            )}
+
+            {/* Editor concimi */}
+            <div className="card p-3" style={{ background: "var(--c-cream)" }}>
+              <p className="text-[10px] uppercase tracking-wider opacity-60 font-bold mb-2">Concimi naturali (facoltativo)</p>
+              {(!form.concimi || form.concimi.length === 0) && (
+                <p className="text-xs italic opacity-60 mb-2">Nessun concime. Aggiungine uno se vuoi suggerimenti specifici nella scheda pianta.</p>
+              )}
+              {form.concimi && form.concimi.map((c, i) => (
+                <div key={i} className="card p-2 mb-2" style={{ background: "white" }}>
+                  <div className="flex items-start gap-2 mb-1">
+                    <input type="text" value={c.nome || ""}
+                      onChange={(e) => {
+                        const newConcimi = [...form.concimi];
+                        newConcimi[i] = { ...c, nome: e.target.value };
+                        set("concimi", newConcimi);
+                      }}
+                      placeholder="Nome concime"
+                      className="flex-1 px-2 py-1 rounded text-xs font-semibold"
+                      style={{ border: "1.5px solid var(--c-border)", background: "var(--c-bg)" }}/>
+                    <button type="button" onClick={() => {
+                      const newConcimi = form.concimi.filter((_, j) => j !== i);
+                      set("concimi", newConcimi);
+                    }}
+                      className="opacity-50 hover:opacity-100" style={{ background: "transparent", border: "none", cursor: "pointer" }}>
+                      <Trash2 size={14}/>
+                    </button>
+                  </div>
+                  <input type="text" value={c.quando || ""}
+                    onChange={(e) => {
+                      const newConcimi = [...form.concimi];
+                      newConcimi[i] = { ...c, quando: e.target.value };
+                      set("concimi", newConcimi);
+                    }}
+                    placeholder="Quando (es. al trapianto)"
+                    className="w-full px-2 py-1 mb-1 rounded text-xs"
+                    style={{ border: "1.5px solid var(--c-border)", background: "var(--c-bg)" }}/>
+                  <input type="text" value={c.come || ""}
+                    onChange={(e) => {
+                      const newConcimi = [...form.concimi];
+                      newConcimi[i] = { ...c, come: e.target.value };
+                      set("concimi", newConcimi);
+                    }}
+                    placeholder="Come (es. una manciata nella buca)"
+                    className="w-full px-2 py-1 rounded text-xs"
+                    style={{ border: "1.5px solid var(--c-border)", background: "var(--c-bg)" }}/>
+                </div>
+              ))}
+              {(!form.concimi || form.concimi.length < 6) && (
+                <button type="button"
+                  onClick={() => set("concimi", [...(form.concimi || []), { nome: "", quando: "", come: "" }])}
+                  className="btn-ghost text-xs w-full justify-center">
+                  <Plus size={12}/> Aggiungi concime
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -3378,8 +3869,8 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti, dayTasksDone, onTog
           });
         }
 
-        // RACCOLTA: sabato mattina (idx 5) se il mese corrisponde e NON è ornamentale
-        if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") {
+        // RACCOLTA: sabato mattina (idx 5) se il mese corrisponde e NON è ornamentale e se la pianta è matura
+        if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale" && isReadyForHarvest(plant, up)) {
           tasks.push({
             id: dayTaskKey(d, "raccolta", plant.id),
             plantId: plant.id,
@@ -4312,13 +4803,30 @@ function TourModal({ onClose }) {
       emoji: "🍅",
       title: "Aggiungi le tue piante",
       body: "Dal Catalogo scegli le piante che hai o vuoi coltivare. 18 già pronte (pomodoro, olivo, ciliegio…) più la possibilità di aggiungerne di nuove: scrivi il nome e l'AI pre-compila tutto (descrizione, calendario, acqua, sole).",
-      tip: "Per frutteti (olivo, vite…) inserisci l'anno di impianto: un albero giovane produce meno, e il calcolo si adegua.",
+      tip: "Per gli ortaggi ti chiediamo la data di semina/trapianto. Per frutteti (olivo, vite…) l'anno di impianto: un albero giovane produce meno.",
+    },
+    {
+      emoji: "⏱️",
+      title: "Tempi di maturazione",
+      body: "Ogni pianta ha il suo ciclo. Un pomodoro impiega ~80 giorni, una zucchina ~55, una carota ~100. La raccolta ti viene suggerita solo quando la pianta è realmente matura — niente 'raccogli pomodoro' il giorno dopo averlo messo.",
+      tip: "Nella scheda di ogni pianta vedi 'Piantata il X · Matura il Y'. Se hai messo 2 pomodori oggi e uno tra un mese, le date saranno diverse.",
+    },
+    {
+      emoji: "🌿",
+      title: "Concimi naturali",
+      body: "Per ogni pianta puoi vedere i concimi biologici consigliati: quando darli e come dosarli. Compost, letame maturo, macerato di ortica, cenere — tutto quello che serve per un orto sano senza chimica.",
+      tip: "Apri una pianta e clicca la tab 'Concimi'. Per le piante custom puoi aggiungere i tuoi consigli.",
     },
     {
       emoji: "📅",
       title: "Calendario e Agenda",
       body: "Il Calendario mostra tutti gli interventi del mese: semina, trapianto, raccolta, irrigazione, potatura. L'Agenda settimanale (Oggi) organizza tutto giorno per giorno, con orari consigliati (es. 18:00 d'estate per l'irrigazione).",
-      tip: "Oggi puoi spuntare i task completati: restano visibili con il segno ✓.",
+      tip: "Puoi spuntare i task completati: restano visibili con il segno ✓ verde. Solo i task di oggi sono cliccabili.",
+    },
+    {
+      emoji: "✂️",
+      title: "Tecniche e innesti",
+      body: "Due sezioni dedicate: 'Tecniche & hack' raccoglie metodi alternativi (no-dig, orto sinergico, Hügelkultur...). La tab 'Innesti' descrive le 6 tecniche principali per i frutteti, con passaggi dettagliati e periodo giusto.",
     },
     {
       emoji: "🔔",
@@ -4331,6 +4839,12 @@ function TourModal({ onClose }) {
       title: "Problemi e rimedi",
       body: "Se una pianta si ammala, aprila e vai nella scheda Problemi. Registra il sintomo, e con un tap chiedi rimedi biologici all'AI.",
       tip: "Le ricerche AI usano Groq, gratis fino a 14.400/giorno — più che sufficienti.",
+    },
+    {
+      emoji: "💰",
+      title: "La rendita del tuo orto",
+      body: "In cima alla home, la sezione collassabile ti mostra una stima economica del tuo orto: quanto vale il raccolto potenziale, basato sulla resa media e sui prezzi di mercato italiani.",
+      tip: "Puoi chiuderla col simbolo › quando non ti interessa, o aprirla per curiosare. Tocca il ? per capire come viene calcolata.",
     },
     {
       emoji: "💾",
@@ -4405,5 +4919,124 @@ function TourModal({ onClose }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// COMPONENTE: RENDITA DEL TUO ORTO — collassabile, con info popup
+// ============================================================
+function RenditaSection({ riepilogo, userPlantsCount }) {
+  // Stato espanso salvato in localStorage per persistenza
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      const v = localStorage.getItem("rendita_expanded");
+      return v === null ? true : v === "true"; // default aperto al primo giro
+    } catch { return true; }
+  });
+  const [showInfo, setShowInfo] = useState(false);
+
+  const toggleExpand = () => {
+    const next = !expanded;
+    setExpanded(next);
+    try { localStorage.setItem("rendita_expanded", next ? "true" : "false"); } catch {}
+  };
+
+  return (
+    <section className="fade-up">
+      <div className="card" style={{ background: "var(--c-ink)", color: "var(--c-cream)", borderColor: "var(--c-ink)" }}>
+        {/* Header sempre visibile */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <button onClick={toggleExpand}
+            className="flex items-center gap-2 text-left"
+            style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit", flex: 1, minWidth: 0 }}>
+            <ChevronRight size={18}
+              style={{
+                transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+                transition: "transform 200ms",
+                color: "var(--c-ochre)",
+              }}/>
+            <div>
+              <p className="serif italic text-[10px] opacity-60 uppercase tracking-wider">La rendita del tuo orto</p>
+              {!expanded ? (
+                <p className="serif font-bold text-base mt-0.5">
+                  🌱 {userPlantsCount} {userPlantsCount === 1 ? "pianta" : "piante"}
+                  {riepilogo.valoreTot > 0 && <> · <span style={{ color: "var(--c-ochre)" }}>~€{riepilogo.valoreTot.toFixed(0)} stimati</span></>}
+                </p>
+              ) : (
+                <h3 className="serif font-bold text-2xl mt-0.5">La rendita del tuo orto</h3>
+              )}
+            </div>
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={(e) => { e.stopPropagation(); setShowInfo(true); }}
+              className="opacity-60 hover:opacity-100 transition"
+              style={{ background: "transparent", border: "none", cursor: "pointer" }}
+              title="Cos'è questo?">
+              <HelpCircle size={18} style={{ color: "var(--c-cream)" }}/>
+            </button>
+          </div>
+        </div>
+
+        {/* Corpo espanso */}
+        {expanded && (
+          <>
+            {riepilogo.valoreTot > 0 && (
+              <div className="text-right mt-3 mb-3">
+                <p className="text-xs opacity-70 serif italic">Valore stimato raccolto annuo</p>
+                <p className="display text-3xl" style={{ color: "var(--c-ochre)" }}>€ {riepilogo.valoreTot.toFixed(0)}</p>
+                <p className="text-[10px] opacity-50">~{riepilogo.kgTot.toFixed(1)} kg · prezzi mercato medi</p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {riepilogo.items.map(({ plant, quantita, valore }) => (
+                <div key={plant.id} className="px-3 py-2 rounded-full flex items-center gap-2" style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
+                  <span className="text-lg">{plant.emoji}</span>
+                  <span className="font-bold text-sm">{plant.nome}</span>
+                  <span className="text-xs opacity-70">× {quantita}</span>
+                  {valore > 0 && <span className="text-[10px] italic" style={{ color: "var(--c-olive-dark)" }}>~€{valore.toFixed(0)}</span>}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Modal info */}
+      {showInfo && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(42,36,24,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }}
+          onClick={() => setShowInfo(false)}>
+          <div className="card" style={{ maxWidth: "500px", width: "100%", background: "var(--c-bg)" }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="serif italic text-[10px] uppercase tracking-wider opacity-60">— spiegazione —</p>
+                <h3 className="serif font-bold text-2xl">La rendita del tuo orto</h3>
+              </div>
+              <button onClick={() => setShowInfo(false)} className="opacity-60 hover:opacity-100"><X size={18}/></button>
+            </div>
+            <div className="space-y-3 text-sm leading-relaxed">
+              <p>
+                Questa sezione ti dà un'idea del <b>valore economico</b> potenziale delle piante che stai coltivando. È calcolato in base a:
+              </p>
+              <ul className="space-y-1.5 pl-4 list-disc">
+                <li><b>Resa media</b> per pianta (es. un pomodoro adulto produce circa 4 kg/stagione)</li>
+                <li><b>Prezzi medi al dettaglio</b> in Italia (2024-2025)</li>
+                <li><b>Età della pianta</b> per il frutteto: un olivo di 2 anni non produce, uno di 7+ è in piena produzione</li>
+              </ul>
+              <div className="card p-3" style={{ background: "var(--c-cream)" }}>
+                <p className="text-xs serif italic opacity-80">
+                  <b>⚠️ È solo una stima.</b> La resa reale dipende da clima, varietà, cure, suolo. Le piante ornamentali non contribuiscono al valore (non si "raccolgono").
+                </p>
+              </div>
+              <p className="text-xs opacity-70">
+                💡 <b>Suggerimento:</b> usa l'icona <ChevronRight size={12} className="inline"/> in alto a sinistra per chiudere o riaprire la sezione a piacere.
+              </p>
+            </div>
+            <button className="btn-primary w-full mt-4 justify-center" onClick={() => setShowInfo(false)}>
+              Ho capito
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
