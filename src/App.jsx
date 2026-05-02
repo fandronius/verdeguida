@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Plus, Calendar, Sprout, BookOpen, Bell, Trash2, X, Droplets, Scissors, Sun, Leaf, CheckCircle2, Circle, MapPin, Home, Flower2, Edit3, Trees, Lightbulb, ExternalLink, Search, Layers, Menu, AlertTriangle, Clock, Euro, Settings, Download, Upload, Share2, RefreshCw } from "lucide-react";
 
 // ============================================================
@@ -589,6 +589,7 @@ export default function VerdeGuida() {
   const [editingCustomPlant, setEditingCustomPlant] = useState(null);
   const [customPlants, setCustomPlants] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // ========== NOTIFICHE ==========
   const [notifPermission, setNotifPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "default");
@@ -607,22 +608,30 @@ export default function VerdeGuida() {
   useEffect(() => {
     (async () => {
       try {
-        const [aRes, pRes, tRes, cRes, nRes] = await Promise.all([
+        const [aRes, pRes, tRes, cRes, nRes, oRes] = await Promise.all([
           window.storage.get("appezzamenti").catch(() => null),
           window.storage.get("user_plants").catch(() => null),
           window.storage.get("completed_tasks").catch(() => null),
           window.storage.get("custom_plants").catch(() => null),
           window.storage.get("notif_settings").catch(() => null),
+          window.storage.get("onboarding_done").catch(() => null),
         ]);
         if (aRes) setAppezzamenti(JSON.parse(aRes.value));
         if (pRes) setUserPlants(JSON.parse(pRes.value));
         if (tRes) setCompletedTasks(JSON.parse(tRes.value));
         if (cRes) setCustomPlants(JSON.parse(cRes.value));
         if (nRes) setNotifSettings(JSON.parse(nRes.value));
+        // Primo avvio: nessun flag salvato → mostra onboarding
+        if (!oRes) setShowOnboarding(true);
       } catch(e) {}
       setLoading(false);
     })();
   }, []);
+
+  const closeOnboarding = async () => {
+    setShowOnboarding(false);
+    try { await window.storage.set("onboarding_done", "1"); } catch(e) {}
+  };
 
   // salvataggio impostazioni notifiche
   const saveNotifSettings = async (next) => {
@@ -1224,6 +1233,7 @@ export default function VerdeGuida() {
           onExport={exportData}
           onImport={importData}
           onReset={resetAll}
+          onShowOnboarding={() => { setShowSettings(false); setShowOnboarding(true); }}
           stats={{
             appezzamenti: appezzamenti.length,
             userPlants: userPlants.length,
@@ -1243,6 +1253,10 @@ export default function VerdeGuida() {
             }
           }}
         />
+      )}
+
+      {showOnboarding && (
+        <OnboardingModal onClose={closeOnboarding} />
       )}
 
       <footer className="px-4 md:px-10 py-8 max-w-6xl mx-auto">
@@ -1318,28 +1332,17 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
       {userPlants.length > 0 && (
         <section className="fade-up">
           <div className="card" style={{ background: "var(--c-ink)", color: "var(--c-cream)", borderColor: "var(--c-ink)" }}>
-            <div className="flex items-baseline justify-between flex-wrap gap-3 mb-4">
-              <div>
-                <p className="serif italic text-xs opacity-70">— il tuo orto in sintesi —</p>
-                <h3 className="serif font-bold text-2xl">Cosa hai piantato</h3>
-              </div>
-              {riepilogo.valoreTot > 0 && (
-                <div className="text-right">
-                  <p className="text-xs opacity-70 serif italic">Valore stimato raccolto</p>
-                  <p className="display text-3xl" style={{ color: "var(--c-ochre)" }}>€ {riepilogo.valoreTot.toFixed(0)}</p>
-                  <p className="text-[10px] opacity-50">~{riepilogo.kgTot.toFixed(1)} kg · prezzi mercato medi</p>
-                </div>
-              )}
+            <div className="mb-4">
+              <p className="serif italic text-xs opacity-70">— il tuo orto in sintesi —</p>
+              <h3 className="serif font-bold text-2xl">Cosa hai piantato</h3>
             </div>
             <div className="flex flex-wrap gap-2">
               {riepilogo.items.map(({ plant, quantita }) => {
-                const val = plant.resaKg && plant.prezzoKg ? (plant.resaKg * quantita * plant.prezzoKg) : 0;
                 return (
                   <div key={plant.id} className="px-3 py-2 rounded-full flex items-center gap-2" style={{ background: "var(--c-cream)", color: "var(--c-ink)" }}>
                     <span className="text-lg">{plant.emoji}</span>
                     <span className="font-bold text-sm">{plant.nome}</span>
                     <span className="text-xs opacity-70">× {quantita}</span>
-                    {val > 0 && <span className="text-[10px] italic" style={{ color: "var(--c-olive-dark)" }}>~€{val.toFixed(0)}</span>}
                   </div>
                 );
               })}
@@ -1462,6 +1465,26 @@ function HomeView({ appezzamenti, activeApp, userPlants, allAppezzamenti, fullCa
             {plantsToSowNow.length === 0 && <p className="text-xs italic opacity-60">Periodo di riposo per semine.</p>}
           </div>
         </div>
+
+        {/* Resoconto economico — discreto, in fondo */}
+        {riepilogo.valoreTot > 0 && (
+          <div
+            className="px-4 py-3 rounded-lg flex items-baseline justify-between gap-3"
+            style={{
+              background: "transparent",
+              border: "1px dashed var(--c-border)",
+              opacity: 0.85,
+            }}
+          >
+            <div className="flex flex-col">
+              <span className="serif italic text-[11px] opacity-70">resa stimata</span>
+              <span className="text-[10px] opacity-50">~{riepilogo.kgTot.toFixed(1)} kg · prezzi mercato medi</span>
+            </div>
+            <span className="font-mono text-lg font-semibold" style={{ color: "var(--c-olive-dark)" }}>
+              € {riepilogo.valoreTot.toFixed(0)}
+            </span>
+          </div>
+        )}
 
         <div className="card-ornate p-5 card" style={{ background: `linear-gradient(135deg, var(--c-ochre) 0%, var(--c-terra) 100%)`, color: "var(--c-cream)", borderColor: "transparent" }}>
           <p className="serif italic text-xs opacity-90">Consiglio del mese</p>
@@ -3341,7 +3364,7 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
 // ============================================================
 // MODAL: IMPOSTAZIONI / BACKUP
 // ============================================================
-function SettingsModal({ onClose, onExport, onImport, onReset, stats, notifSettings, notifPermission, onNotifChange }) {
+function SettingsModal({ onClose, onExport, onImport, onReset, onShowOnboarding, stats, notifSettings, notifPermission, onNotifChange }) {
   const [importResult, setImportResult] = useState(null);
   const [importing, setImporting] = useState(false);
 
@@ -3686,9 +3709,190 @@ function SettingsModal({ onClose, onExport, onImport, onReset, stats, notifSetti
           </div>
         </div>
 
-        <p className="text-[10px] opacity-50 text-center mt-6 font-mono">
+        <div className="text-center mt-6">
+          <button
+            onClick={onShowOnboarding}
+            className="text-xs serif italic underline opacity-60 hover:opacity-100"
+            style={{ color: "var(--c-olive-dark)" }}
+          >
+            Rivedi la guida introduttiva
+          </button>
+        </div>
+
+        <p className="text-[10px] opacity-50 text-center mt-4 font-mono">
           VerdeGuida · v{APP_VERSION} · by Fandronius
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MODAL: ONBOARDING — guida introduttiva (5 slide)
+// ============================================================
+const ONBOARDING_SLIDES = [
+  {
+    emoji: "🌱",
+    eyebrow: "— benvenuto —",
+    title: "Il tuo quaderno di campagna",
+    body: "VerdeGuida ti accompagna giorno per giorno nella cura del tuo orto. Annota piante, terreno, interventi: l'app calcola tempi e suggerimenti su misura per te.",
+  },
+  {
+    emoji: "🗺️",
+    eyebrow: "— spazi diversi —",
+    title: "Crea i tuoi appezzamenti",
+    body: "Orto, balcone, vasi, serra, idroponica: ogni spazio ha un microclima e regole sue. Aggiungine quanti vuoi e gestiscili separatamente, anche con flag per serra o letto rialzato.",
+  },
+  {
+    emoji: "📚",
+    eyebrow: "— catalogo + AI —",
+    title: "Pianta dal catalogo o cercala con l'AI",
+    body: "Scegli da decine di piante già pronte con periodi di semina, raccolta, irrigazione e prezzi medi. Vuoi una pianta nuova? Cerca con l'AI: trova tutto quello che serve e lo aggiunge al tuo catalogo personale.",
+  },
+  {
+    emoji: "📅",
+    eyebrow: "— il motore dell'app —",
+    title: "Calendario e agenda settimanale",
+    body: "L'app calcola da sola quando seminare, trapiantare, irrigare, raccogliere. Ogni mattina vedi cosa fare oggi. Ogni settimana hai un'agenda con orari consigliati per ciascun intervento.",
+  },
+  {
+    emoji: "🔬",
+    eyebrow: "— diagnosi e tecniche —",
+    title: "Problemi, rimedi e pacciamatura",
+    body: "Foglie ingiallite? Parassiti? Chiedi un rimedio mirato. E se vuoi sperimentare: no-dig, hügelkultur, sinergico, oltre 10 materiali di pacciamatura con guida d'uso. Tutto integrato.",
+  },
+];
+
+function OnboardingModal({ onClose }) {
+  const [idx, setIdx] = useState(0);
+  const total = ONBOARDING_SLIDES.length;
+  const slide = ONBOARDING_SLIDES[idx];
+  const isFirst = idx === 0;
+  const isLast = idx === total - 1;
+
+  const next = () => { if (!isLast) setIdx(idx + 1); };
+  const prev = () => { if (!isFirst) setIdx(idx - 1); };
+
+  // Swipe handling (touch)
+  const touchStart = useRef(null);
+  const onTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStart.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current;
+    if (Math.abs(dx) > 40) {
+      if (dx < 0) next();
+      else prev();
+    }
+    touchStart.current = null;
+  };
+
+  // Frecce tastiera
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "ArrowRight") next();
+      else if (e.key === "ArrowLeft") prev();
+      else if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx]);
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(42,36,24,0.7)", zIndex: 250, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }}
+      className="modal-overlay"
+      onClick={onClose}
+    >
+      <div
+        className="card"
+        style={{
+          maxWidth: "440px",
+          width: "100%",
+          background: "var(--c-bg)",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          position: "relative",
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Close (skip) */}
+        <button
+          onClick={onClose}
+          className="opacity-60 hover:opacity-100"
+          style={{ position: "absolute", top: 14, right: 14, zIndex: 2 }}
+          aria-label="Chiudi guida"
+        >
+          <X size={20}/>
+        </button>
+
+        {/* Contenuto slide */}
+        <div className="px-2 py-4 text-center">
+          <div className="text-7xl mb-4" style={{ lineHeight: 1 }}>{slide.emoji}</div>
+          <p className="serif italic text-xs mb-2" style={{ color: "var(--c-olive-dark)" }}>{slide.eyebrow}</p>
+          <h3 className="display text-3xl leading-tight mb-3" style={{ color: "var(--c-ink)" }}>
+            {slide.title}
+          </h3>
+          <p className="text-sm leading-relaxed opacity-80 px-2">{slide.body}</p>
+        </div>
+
+        {/* Indicatori (puntini) */}
+        <div className="flex items-center justify-center gap-1.5 mt-4 mb-5">
+          {ONBOARDING_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              aria-label={`Vai alla slide ${i + 1}`}
+              style={{
+                width: i === idx ? 22 : 7,
+                height: 7,
+                borderRadius: 4,
+                background: i === idx ? "var(--c-olive-dark)" : "var(--c-border)",
+                transition: "all 200ms ease",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Navigazione */}
+        <div className="flex items-center justify-between gap-3 px-1">
+          <button
+            onClick={prev}
+            disabled={isFirst}
+            className="btn-ghost text-sm"
+            style={{ opacity: isFirst ? 0.3 : 1, visibility: isFirst ? "hidden" : "visible" }}
+          >
+            ‹ Indietro
+          </button>
+
+          {isLast ? (
+            <button onClick={onClose} className="btn-primary text-sm">
+              Iniziamo 🌱
+            </button>
+          ) : (
+            <button onClick={next} className="btn-primary text-sm">
+              Avanti ›
+            </button>
+          )}
+        </div>
+
+        {/* Skip discreto solo se non sull'ultima */}
+        {!isLast && (
+          <div className="text-center mt-4">
+            <button
+              onClick={onClose}
+              className="text-xs serif italic opacity-50 hover:opacity-80 underline"
+              style={{ color: "var(--c-olive-dark)" }}
+            >
+              salta la guida
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
