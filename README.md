@@ -1,6 +1,6 @@
 # 🌱 VerdeGuida
 
-**v1.4.0 · by Fandronius**
+**v1.5.1 · by Fandronius**
 
 Il tuo quaderno di campagna digitale. PWA installabile su iPhone e Android.
 
