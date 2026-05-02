@@ -1519,6 +1519,8 @@ function getTipOfMonth(m) {
 // ============================================================
 function CalendarView({ tasks, selectedMonth, setSelectedMonth, toggleTaskDone, completedTasks, currentMonth, appezzamenti }) {
   const [hiddenTypes, setHiddenTypes] = useState(new Set());
+  const [showPastMonths, setShowPastMonths] = useState(false);
+
   const toggleType = (t) => {
     setHiddenTypes(prev => {
       const next = new Set(prev);
@@ -1526,6 +1528,24 @@ function CalendarView({ tasks, selectedMonth, setSelectedMonth, toggleTaskDone, 
       return next;
     });
   };
+
+  // Mesi visibili: di default solo da quello corrente in avanti.
+  // Se showPastMonths=true, mostro tutto l'anno (gen→dic) ma quelli passati
+  // appaiono sbiaditi.
+  const visibleMonthIndexes = useMemo(() => {
+    if (showPastMonths) return MESI.map((_, i) => i);
+    return MESI.map((_, i) => i).filter(i => i >= currentMonth);
+  }, [showPastMonths, currentMonth]);
+
+  // Se l'utente seleziona un mese passato e poi nasconde, riporto al corrente
+  useEffect(() => {
+    if (!showPastMonths && selectedMonth < currentMonth) {
+      setSelectedMonth(currentMonth);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPastMonths, currentMonth]);
+
+  const hasPastMonths = currentMonth > 0; // a gennaio non c'è nulla da nascondere
 
   const monthTasks = tasks.filter(t => t.mese === selectedMonth + 1 && !hiddenTypes.has(t.type));
   const grouped = monthTasks.reduce((acc, t) => {
@@ -1554,24 +1574,42 @@ function CalendarView({ tasks, selectedMonth, setSelectedMonth, toggleTaskDone, 
       <h2 className="display text-4xl mb-2">Calendario <span style={{ color: "var(--c-olive-dark)" }}>agricolo</span></h2>
       <p className="serif italic opacity-70 mb-6">Gli interventi programmati, adattati al microclima dei tuoi appezzamenti.</p>
 
+      {/* Toggle mostra/nascondi mesi passati */}
+      {hasPastMonths && (
+        <div className="flex items-center justify-end mb-2">
+          <button
+            onClick={() => setShowPastMonths(v => !v)}
+            className="text-[11px] serif italic underline opacity-60 hover:opacity-100"
+            style={{ color: "var(--c-olive-dark)" }}
+          >
+            {showPastMonths ? "nascondi mesi passati" : "mostra mesi passati"}
+          </button>
+        </div>
+      )}
+
       <div className="flex gap-2 overflow-x-auto scroll-hide mb-4 pb-2">
-        {MESI.map((m, i) => {
+        {visibleMonthIndexes.map((i) => {
+          const m = MESI[i];
           const count = tasks.filter(t => t.mese === i + 1).length;
           const isActive = i === selectedMonth;
           const isCurrent = i === currentMonth;
+          const isPast = i < currentMonth;
           return (
             <button key={m} onClick={() => setSelectedMonth(i)}
-              className="flex-shrink-0 px-4 py-3 rounded-xl transition relative min-w-[90px]"
+              className="flex-shrink-0 px-4 py-3 rounded-xl transition relative"
               style={{
-                background: isActive ? "var(--c-ink)" : "var(--c-cream)",
-                color: isActive ? "var(--c-cream)" : "var(--c-ink)",
-                border: `1.5px solid ${isActive ? "var(--c-ink)" : "var(--c-border)"}`,
+                background: isActive ? "var(--c-ink)" : isCurrent ? "var(--c-olive-dark)" : "var(--c-cream)",
+                color: (isActive || isCurrent) ? "var(--c-cream)" : "var(--c-ink)",
+                border: `${isCurrent && !isActive ? 2 : 1.5}px solid ${isActive ? "var(--c-ink)" : isCurrent ? "var(--c-olive-dark)" : "var(--c-border)"}`,
                 cursor: "pointer",
+                opacity: isPast ? 0.55 : 1,
+                minWidth: isCurrent ? "100px" : "90px",
+                transform: isCurrent ? "scale(1.02)" : "scale(1)",
               }}>
-              {isCurrent && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--c-terra)" }}></span>}
+              {isCurrent && !isActive && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--c-ochre)" }}></span>}
               <div className="serif text-xs opacity-70 uppercase tracking-wider">{m.slice(0,3)}</div>
-              <div className="text-lg font-bold mt-0.5">{count}</div>
-              <div className="text-[9px] opacity-60">interventi</div>
+              <div className={`${isCurrent ? "text-xl" : "text-lg"} font-bold mt-0.5`}>{count}</div>
+              <div className="text-[9px] opacity-60">{isCurrent ? "questo mese" : "interventi"}</div>
             </button>
           );
         })}
@@ -3062,6 +3100,7 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
 // ============================================================
 function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
   const [weekOffset, setWeekOffset] = useState(0); // 0 = questa settimana
+  const [showPastDays, setShowPastDays] = useState(false);
 
   // calcola il lunedì della settimana corrente (+ offset)
   const lunediBase = useMemo(() => {
@@ -3273,11 +3312,24 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
       </div>
 
       {/* NAVIGAZIONE SETTIMANE */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         <button onClick={() => setWeekOffset(w => w - 1)} className="btn-ghost">← precedente</button>
         <button onClick={() => setWeekOffset(0)} className={`btn-ghost ${weekOffset === 0 ? "active" : ""}`}>Oggi</button>
         <button onClick={() => setWeekOffset(w => w + 1)} className="btn-ghost">successiva →</button>
       </div>
+
+      {/* TOGGLE giorni passati: visibile solo se ce ne sono nella settimana visualizzata */}
+      {giorniSett.some(d => d < oggi) && (
+        <div className="flex items-center justify-end mb-4">
+          <button
+            onClick={() => setShowPastDays(v => !v)}
+            className="text-[11px] serif italic underline opacity-60 hover:opacity-100"
+            style={{ color: "var(--c-olive-dark)" }}
+          >
+            {showPastDays ? "nascondi giorni passati" : "mostra giorni passati"}
+          </button>
+        </div>
+      )}
 
       {totalTasks === 0 && (
         <div className="card text-center py-10">
@@ -3287,25 +3339,57 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
         </div>
       )}
 
+      {/* Avviso se la settimana visualizzata è tutta nel passato e i giorni sono nascosti */}
+      {!showPastDays && giorniSett.every(d => d < oggi) && totalTasks > 0 && (
+        <div className="card text-center py-8" style={{ background: "var(--c-cream)" }}>
+          <p className="text-3xl mb-2">📅</p>
+          <p className="serif text-base">Settimana già trascorsa.</p>
+          <p className="text-xs opacity-70 mt-2">
+            <button
+              onClick={() => setShowPastDays(true)}
+              className="underline"
+              style={{ color: "var(--c-olive-dark)" }}
+            >
+              Mostra comunque
+            </button>
+            {" "}o vai alla settimana successiva.
+          </p>
+        </div>
+      )}
+
       {/* GIORNI */}
       <div className="space-y-3">
         {giorniSett.map((d, idx) => {
           const tasks = tasksPerGiorno[idx] || [];
           const isOggi = d.getTime() === oggi.getTime();
+          const isPast = d < oggi;
+          // Filtro: se è passato e il toggle è off, salto
+          if (isPast && !showPastDays) return null;
           const raggruppati = raggruppaPerOra(tasks);
 
           return (
             <div key={idx} className="card" style={{
-              opacity: d < oggi ? 0.55 : 1,
+              opacity: isPast ? 0.5 : 1,
               borderColor: isOggi ? "var(--c-terra)" : "var(--c-border)",
-              borderWidth: isOggi ? "2px" : "1.5px",
+              borderWidth: isOggi ? "2.5px" : "1.5px",
+              background: isOggi ? "var(--c-cream)" : "var(--c-bg)",
+              boxShadow: isOggi ? "0 4px 14px rgba(150, 90, 50, 0.15)" : "none",
             }}>
               <div className="flex items-baseline justify-between mb-3">
                 <div>
-                  <p className="serif italic text-xs opacity-70">{GIORNI_LUNGHI[idx]}</p>
-                  <h3 className="display text-2xl">
+                  <p className="serif italic text-xs" style={{ color: isOggi ? "var(--c-terra-dark)" : "inherit", opacity: isOggi ? 1 : 0.7 }}>
+                    {GIORNI_LUNGHI[idx]}
+                  </p>
+                  <h3 className={`display ${isOggi ? "text-3xl" : "text-2xl"}`} style={{ color: isOggi ? "var(--c-terra-dark)" : "inherit" }}>
                     {d.getDate()} <span className="text-base font-normal" style={{ color: "var(--c-olive-dark)" }}>{MESI[d.getMonth()].slice(0,3).toLowerCase()}</span>
-                    {isOggi && <span className="chip terra ml-2" style={{ fontSize: "9px", verticalAlign: "middle" }}>oggi</span>}
+                    {isOggi && (
+                      <span
+                        className="ml-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider align-middle"
+                        style={{ background: "var(--c-terra)", color: "var(--c-cream)" }}
+                      >
+                        oggi
+                      </span>
+                    )}
                   </h3>
                 </div>
                 <span className="chip">{tasks.length}</span>
@@ -3316,7 +3400,7 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
               ) : (
                 <div className="space-y-2">
                   {raggruppati.map((g, i) => (
-                    <div key={i} className="flex items-start gap-3 p-2 rounded-lg" style={{ background: "var(--c-bg)" }}>
+                    <div key={i} className="flex items-start gap-3 p-2 rounded-lg" style={{ background: isOggi ? "var(--c-bg)" : "var(--c-cream)" }}>
                       <div className="flex flex-col items-center flex-shrink-0" style={{ minWidth: "52px" }}>
                         <span className="font-mono font-bold text-sm" style={{ color: g.color }}>{g.ora}</span>
                         <span className="text-xl mt-0.5">{g.icon}</span>
