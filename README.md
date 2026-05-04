@@ -77,6 +77,13 @@ netlify dev
 
 ## Changelog
 
+### v1.5.1
+- 🍅 **Maturazione per singola pianta**: la raccolta non viene più suggerita solo perché siamo nel mese giusto. Adesso ogni pianta ha un campo `giorniMaturazione` (pomodoro 75, lattuga 45, basilico 40, ecc.) e l'app considera quando l'hai effettivamente piantata. Se pianti un pomodoro il 4 maggio, la raccolta apparirà solo da metà luglio in poi, anche se a giugno è già "stagione di pomodori".
+- 📅 **Editor data di piantagione**: nel modal "Modifica pianta" puoi ora correggere la data se hai messo a dimora la pianta giorni o settimane prima di registrarla in app. L'app mostra anche la data prevista di prima raccolta.
+- 🔍 **Fix bottone Cerca su mobile**: nel modal "Aggiungi pianta" il bottone verde "Cerca" non veniva tagliato su schermi stretti. Ora va a tutta larghezza sotto l'input su mobile, e resta accanto su tablet/desktop.
+- ➕ **Prompt AI** per piante custom aggiornato: chiede anche `giorniMaturazione` per coerenza con le piante del catalogo.
+- 🛡️ **Compatibilità con dati esistenti**: piante già presenti nel tuo orto senza data di piantagione mantengono il vecchio comportamento — nessuna migrazione, nessun dato perso.
+
 ### v1.4.0
 - 🌱 Rebranding: nuovo nome **VerdeGuida**, nuova icona (pianta che nasce da un libro), colore primario verde oliva
 - Selettore emoji a categorie
