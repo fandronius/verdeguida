@@ -32,60 +32,70 @@ const PLANT_CATALOG = [
     semina: [3,4], trapianto: [4,5], raccolta: [7,8,9],
     spazio: "60 cm tra piante", acqua: "alta", sole: "pieno",
     difficolta: "media", vasoOk: true,
+    giorniMaturazione: 75,
     resaKg: 4, prezzoKg: 2.5  },
   { id: "zucchina", nome: "Zucchina", categoria: "orto", emoji: "🥒",
     descrizione: "Pianta molto produttiva. Raccogli i frutti giovani per stimolare nuova produzione.",
     semina: [4,5], trapianto: [5,6], raccolta: [6,7,8,9],
     spazio: "1 m tra piante", acqua: "alta", sole: "pieno",
     difficolta: "facile", vasoOk: true,
+    giorniMaturazione: 50,
     resaKg: 8, prezzoKg: 2.0  },
   { id: "insalata", nome: "Lattuga", categoria: "orto", emoji: "🥬",
     descrizione: "Cresce rapidamente. Semina scalare ogni 2-3 settimane per raccolto continuo.",
     semina: [2,3,4,5,8,9,10], trapianto: [3,4,5,9,10], raccolta: [4,5,6,7,10,11],
     spazio: "25 cm tra piante", acqua: "media", sole: "mezz'ombra",
     difficolta: "facile", vasoOk: true,
+    giorniMaturazione: 45,
     resaKg: 0.4, prezzoKg: 3.0  },
   { id: "basilico", nome: "Basilico", categoria: "orto", emoji: "🌿",
     descrizione: "Aromatica essenziale. Cima regolarmente per favorire la ramificazione e ritardare la fioritura.",
     semina: [4,5], trapianto: [5,6], raccolta: [6,7,8,9],
     spazio: "30 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "facile", vasoOk: true,
+    giorniMaturazione: 40,
     resaKg: 0.3, prezzoKg: 25.0  },
   { id: "peperone", nome: "Peperone", categoria: "orto", emoji: "🫑",
     descrizione: "Richiede calore e tempi lunghi. Sostieni i rami carichi di frutti con tutori.",
     semina: [2,3], trapianto: [5], raccolta: [7,8,9,10],
     spazio: "50 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: true,
+    giorniMaturazione: 90,
     resaKg: 2, prezzoKg: 3.0  },
   { id: "melanzana", nome: "Melanzana", categoria: "orto", emoji: "🍆",
     descrizione: "Ama il caldo. Cimare la pianta dopo 4-5 foglie stimola la produzione laterale.",
     semina: [2,3], trapianto: [5], raccolta: [7,8,9,10],
     spazio: "60 cm tra piante", acqua: "alta", sole: "pieno",
     difficolta: "media", vasoOk: true,
+    giorniMaturazione: 80,
     resaKg: 3, prezzoKg: 2.0  },
   { id: "carota", nome: "Carota", categoria: "orto", emoji: "🥕",
     descrizione: "Richiede terreno soffice e profondo, privo di sassi. Diradare le piantine è essenziale.",
     semina: [3,4,5,6,7], trapianto: [], raccolta: [6,7,8,9,10],
     spazio: "5 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
+    giorniMaturazione: 90,
     resaKg: 0.12, prezzoKg: 1.8  },
   { id: "cipolla", nome: "Cipolla", categoria: "orto", emoji: "🧅",
     descrizione: "Si pianta in bulbilli. Riduci le irrigazioni prima della raccolta per migliorare la conservazione.",
     semina: [2,3,9,10], trapianto: [2,3,10], raccolta: [6,7],
     spazio: "15 cm tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: false,
+    giorniMaturazione: 120,
     resaKg: 0.15, prezzoKg: 1.5  },
   { id: "fagiolino", nome: "Fagiolino", categoria: "orto", emoji: "🫘",
     descrizione: "Raccolta scalare. I fagiolini rampicanti richiedono tutori alti fino a 2 metri.",
     semina: [4,5,6,7], trapianto: [], raccolta: [6,7,8,9],
     spazio: "20 cm tra piante", acqua: "media", sole: "pieno",
     difficolta: "facile", vasoOk: true,
+    giorniMaturazione: 60,
     resaKg: 0.5, prezzoKg: 4.5  },
   { id: "rosmarino", nome: "Rosmarino", categoria: "orto", emoji: "🌱",
     descrizione: "Aromatica perenne resistente alla siccità. Una volta avviata richiede pochissime cure.",
     semina: [3,4], trapianto: [4,5,9,10], raccolta: [1,2,3,4,5,6,7,8,9,10,11,12],
     spazio: "80 cm tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: true,
+    giorniMaturazione: 60,
     resaKg: 1, prezzoKg: 15.0  },
 
   // FRUTTETO
@@ -94,48 +104,56 @@ const PLANT_CATALOG = [
     semina: [], trapianto: [3,4,10], raccolta: [11,12,1,2,3,4,5],
     spazio: "4 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: true,
+    giorniMaturazione: 0,
     resaKg: 30, prezzoKg: 2.5  },
   { id: "fico", nome: "Fico", categoria: "frutteto", emoji: "🫒",
     descrizione: "Albero robusto e rustico. Alcune varietà producono due volte: fioroni a giugno e fichi a agosto-settembre.",
     semina: [], trapianto: [10,11,2,3], raccolta: [6,8,9],
     spazio: "5 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "facile", vasoOk: false,
+    giorniMaturazione: 0,
     resaKg: 40, prezzoKg: 4.0  },
   { id: "olivo", nome: "Olivo", categoria: "frutteto", emoji: "🫒",
     descrizione: "Simbolo del Mediterraneo. Potatura a vaso ogni anno dopo la raccolta, molto longevo.",
     semina: [], trapianto: [3,4,10,11], raccolta: [10,11,12],
     spazio: "6 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "media", vasoOk: false,
+    giorniMaturazione: 0,
     resaKg: 25, prezzoKg: 3.0  },
   { id: "pesco", nome: "Pesco", categoria: "frutteto", emoji: "🍑",
     descrizione: "Albero da frutto di vita breve (15-20 anni). Richiede potatura invernale accurata ogni anno.",
     semina: [], trapianto: [11,12,1,2], raccolta: [6,7,8],
     spazio: "5 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
+    giorniMaturazione: 0,
     resaKg: 50, prezzoKg: 2.5  },
   { id: "vite", nome: "Vite", categoria: "frutteto", emoji: "🍇",
     descrizione: "Richiede palo o pergolato. Potatura secca in inverno e potatura verde in estate per la qualità dei grappoli.",
     semina: [], trapianto: [11,12,1,2,3], raccolta: [8,9,10],
     spazio: "2 m tra piante", acqua: "bassa", sole: "pieno",
     difficolta: "difficile", vasoOk: false,
+    giorniMaturazione: 0,
     resaKg: 8, prezzoKg: 3.5  },
   { id: "melo", nome: "Melo", categoria: "frutteto", emoji: "🍎",
     descrizione: "Preferisce climi freschi ma esistono varietà adatte al Sud. Diradare i frutti a giugno per pezzature migliori.",
     semina: [], trapianto: [11,12,1,2], raccolta: [8,9,10],
     spazio: "4 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
+    giorniMaturazione: 0,
     resaKg: 60, prezzoKg: 2.0  },
   { id: "ciliegio", nome: "Ciliegio", categoria: "frutteto", emoji: "🍒",
     descrizione: "Fioritura spettacolare a primavera. Proteggi i frutti con reti antiuccello prima della maturazione.",
     semina: [], trapianto: [11,12,1,2], raccolta: [5,6],
     spazio: "6 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
+    giorniMaturazione: 0,
     resaKg: 30, prezzoKg: 6.0  },
   { id: "albicocco", nome: "Albicocco", categoria: "frutteto", emoji: "🍑",
     descrizione: "Fiorisce molto presto, attenzione alle gelate tardive. Produce abbondantemente in anni alterni.",
     semina: [], trapianto: [11,12,1,2], raccolta: [6,7],
     spazio: "5 m tra piante", acqua: "media", sole: "pieno",
     difficolta: "media", vasoOk: false,
+    giorniMaturazione: 0,
     resaKg: 40, prezzoKg: 3.0  },
 ];
 
@@ -156,7 +174,7 @@ const IN_VASO = new Set(["balcone", "terrazzo"]);
 
 // Versione letta da package.json tramite Vite `define`. Fallback per
 // safety (build sporche, test runner, ecc.)
-const APP_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "1.5.0";
+const APP_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "1.5.1";
 
 // Endpoint API: in produzione chiama il proxy Netlify Function che nasconde la key.
 // In dev locale funziona comunque se Netlify CLI gira (netlify dev).
@@ -491,6 +509,45 @@ function calcolaIrrigazione(plant, tipoAppezzamento, mese) {
 }
 
 // ============================================================
+// MATURAZIONE — controlla se una specifica pianta piantata
+// dall'utente è pronta per essere raccolta in base ai giorni
+// trascorsi dal trapianto/semina (campo addedAt sul userPlant
+// e giorniMaturazione sulla scheda della specie).
+// Ritorna true se NON ci sono dati sufficienti per dirlo (degrade
+// graceful per piante esistenti pre-aggiornamento) — in quel caso
+// si torna al comportamento pre-fix (raccolta solo per stagione).
+// ============================================================
+function daysSince(isoDate) {
+  if (!isoDate) return null;
+  const start = new Date(isoDate).getTime();
+  if (Number.isNaN(start)) return null;
+  const ms = Date.now() - start;
+  return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
+
+function isReadyForHarvest(userPlant, plant) {
+  if (!plant) return false;
+  // perenni / alberi del frutteto: maturazione = 0 → sempre pronti (poi filtra la stagione)
+  const gg = plant.giorniMaturazione;
+  if (gg === 0) return true;
+  // se la pianta non ha info di maturazione, comportamento legacy: lascia passare
+  if (typeof gg !== "number" || gg < 0) return true;
+  // se la pianta utente non ha addedAt (vecchia), idem: comportamento legacy
+  const giorni = daysSince(userPlant?.addedAt);
+  if (giorni === null) return true;
+  return giorni >= gg;
+}
+
+// stima la prossima data utile per la raccolta — usata nei messaggi UI
+function nextHarvestDate(userPlant, plant) {
+  if (!plant || typeof plant.giorniMaturazione !== "number") return null;
+  if (!userPlant?.addedAt) return null;
+  const start = new Date(userPlant.addedAt).getTime();
+  if (Number.isNaN(start)) return null;
+  return new Date(start + plant.giorniMaturazione * 24 * 60 * 60 * 1000);
+}
+
+// ============================================================
 // GENERATORE INTERVENTI — ora tiene conto dell'appezzamento
 // ============================================================
 function generateTasksForPlant(userPlant, appezzamento, catalog = PLANT_CATALOG) {
@@ -517,6 +574,16 @@ function generateTasksForPlant(userPlant, appezzamento, catalog = PLANT_CATALOG)
   raccolta.forEach(m => {
     // per le ornamentali non ha senso un "task di raccolta"
     if (plant.categoria === "ornamentale") return;
+    // se la pianta non è ancora matura entro la fine del mese m, salta
+    const ggMat = plant.giorniMaturazione;
+    if (typeof ggMat === "number" && ggMat > 0 && userPlant?.addedAt) {
+      const start = new Date(userPlant.addedAt).getTime();
+      if (!Number.isNaN(start)) {
+        const matura = start + ggMat * 24 * 60 * 60 * 1000;
+        const fineMese = new Date(year, m, 0).getTime(); // ultimo giorno del mese m
+        if (fineMese < matura) return; // mese troppo presto rispetto alla maturazione
+      }
+    }
     tasks.push({
       type: "raccolta", icon: "🧺", mese: m, year,
       titolo: `Raccolta ${plant.nome}`,
@@ -868,8 +935,8 @@ export default function VerdeGuida() {
       if (giornoIdx === 2 && trapianto.includes(mese)) {
         tasksRaw.push({ tipo: "trapianto", plant, appezz });
       }
-      // raccolta: sabato (idx 5), no ornamentali
-      if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") {
+      // raccolta: sabato (idx 5), no ornamentali, e solo se la pianta è matura
+      if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale" && isReadyForHarvest(up, plant)) {
         tasksRaw.push({ tipo: "raccolta", plant, appezz });
       }
       // irrigazione: come nell'agenda
@@ -944,7 +1011,7 @@ export default function VerdeGuida() {
 
           if (giornoIdx === 2 && semina.includes(mese)) tasksOggi.push(`semina ${plant.nome}`);
           if (giornoIdx === 2 && trapianto.includes(mese)) tasksOggi.push(`trapianta ${plant.nome}`);
-          if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") tasksOggi.push(`raccogli ${plant.nome}`);
+          if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale" && isReadyForHarvest(up, plant)) tasksOggi.push(`raccogli ${plant.nome}`);
           const fab = plant.acqua;
           const mesiI = fab === "alta" ? [5,6,7,8,9] : fab === "media" ? [6,7,8] : [7,8];
           if (mesiI.includes(mese)) {
@@ -2272,6 +2339,9 @@ function AddPlantModal({ plant, appezzamenti, defaultAppezzamentoId, onAdd, onCl
             {seminaShifted.length > 0 && <p><b className="serif">Semina:</b> {seminaShifted.map(m => MESI[m-1]).join(", ")}</p>}
             {trapiantoShifted.length > 0 && <p><b className="serif">Trapianto:</b> {trapiantoShifted.map(m => MESI[m-1]).join(", ")}</p>}
             <p><b className="serif">{plant.categoria === "ornamentale" ? "Fioritura" : "Raccolta"}:</b> {raccoltaShifted.map(m => MESI[m-1]).join(", ")}</p>
+            {plant.categoria !== "ornamentale" && typeof plant.giorniMaturazione === "number" && plant.giorniMaturazione > 0 && (
+              <p className="opacity-80"><b className="serif">Tempo alla maturazione:</b> ~{plant.giorniMaturazione} giorni dal trapianto/semina (la raccolta verrà suggerita solo dopo)</p>
+            )}
           </div>
         </div>
 
@@ -2320,6 +2390,11 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
   const [appezzamentoId, setAppezzamentoId] = useState(userPlant.appezzamentoId);
   const [problemi, setProblemi] = useState(userPlant.problemi || []);
   const [showProblemaForm, setShowProblemaForm] = useState(false);
+  // data di piantagione (modificabile per correggere date di piantagioni avvenute prima dell'inserimento in app)
+  const [addedAtDate, setAddedAtDate] = useState(() => {
+    const iso = userPlant.addedAt || new Date().toISOString();
+    return iso.slice(0, 10); // YYYY-MM-DD
+  });
   if (!plant) return null;
 
   const selectedApp = appezzamenti.find(a => a.id === appezzamentoId);
@@ -2406,6 +2481,33 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
               </div>
             </label>
 
+            <label className="block mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Data di piantagione</span>
+              <input
+                type="date"
+                value={addedAtDate}
+                max={new Date().toISOString().slice(0,10)}
+                onChange={(e) => setAddedAtDate(e.target.value)}
+                className="w-full mt-1 px-3 py-2 rounded-lg"
+                style={{ border: "1.5px solid var(--c-border)", background: "var(--c-cream)" }}
+              />
+              {plant.categoria !== "ornamentale" && typeof plant.giorniMaturazione === "number" && plant.giorniMaturazione > 0 && (() => {
+                const start = new Date(addedAtDate).getTime();
+                if (Number.isNaN(start)) return null;
+                const harvest = new Date(start + plant.giorniMaturazione * 24 * 60 * 60 * 1000);
+                const oggi = new Date(); oggi.setHours(0,0,0,0);
+                const giorniMancano = Math.ceil((harvest - oggi) / (1000*60*60*24));
+                const dataStr = harvest.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+                return (
+                  <p className="text-[11px] mt-1 opacity-70 serif italic">
+                    {giorniMancano > 0
+                      ? `Raccolta prevista dal ${dataStr} (~${giorniMancano} giorni)`
+                      : `Pronta per la raccolta (matura dal ${dataStr})`}
+                  </p>
+                );
+              })()}
+            </label>
+
             <label className="block mb-5">
               <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Note personali</span>
               <textarea value={note} onChange={(e) => setNote(e.target.value)} rows="2"
@@ -2466,7 +2568,18 @@ function EditPlantModal({ userPlant, plant, appezzamenti, onSave, onRemove, onCl
           </button>
           <button className="btn-ghost flex-1" onClick={onClose}>Annulla</button>
           <button className="btn-primary flex-1 justify-center"
-            onClick={() => onSave(userPlant.id, { quantita, note, appezzamentoId, problemi })}>
+            onClick={() => {
+              // ricostruisco un ISO valido a partire dalla data scelta, mantenendo
+              // l'ora originale di addedAt se possibile (così se solo cambio la quantità
+              // non sposto l'orario)
+              let nuovoAddedAt = userPlant.addedAt;
+              const dataScelta = addedAtDate; // YYYY-MM-DD
+              const oraOriginale = userPlant.addedAt ? userPlant.addedAt.slice(10) : "T12:00:00.000Z";
+              if (dataScelta && /^\d{4}-\d{2}-\d{2}$/.test(dataScelta)) {
+                nuovoAddedAt = dataScelta + (oraOriginale.startsWith("T") ? oraOriginale : "T12:00:00.000Z");
+              }
+              onSave(userPlant.id, { quantita, note, appezzamentoId, problemi, addedAt: nuovoAddedAt });
+            }}>
             Salva
           </button>
         </div>
@@ -2810,6 +2923,7 @@ Restituisci SOLO un oggetto JSON valido (no testo prima o dopo, no markdown, no 
   "semina": [array di numeri 1-12 con i mesi di semina, vuoto se non si semina da seme],
   "trapianto": [array di numeri 1-12 con i mesi di trapianto/messa a dimora],
   "raccolta": [array di numeri 1-12 con i mesi di raccolta o fioritura],
+  "giorniMaturazione": numero di giorni medi dal trapianto/semina al primo raccolto (es. pomodoro 75, lattuga 45, basilico 40). Per alberi da frutto adulti già produttivi metti 0. Per piante ornamentali metti 0.,
   "acqua": "bassa" | "media" | "alta",
   "sole": "pieno" | "mezz'ombra" | "ombra",
   "difficolta": "facile" | "media" | "difficile",
@@ -2869,6 +2983,9 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
         semina: Array.isArray(parsed.semina) ? parsed.semina.filter(n => n >= 1 && n <= 12) : [],
         trapianto: Array.isArray(parsed.trapianto) ? parsed.trapianto.filter(n => n >= 1 && n <= 12) : [],
         raccolta: Array.isArray(parsed.raccolta) ? parsed.raccolta.filter(n => n >= 1 && n <= 12) : [],
+        giorniMaturazione: typeof parsed.giorniMaturazione === "number" && parsed.giorniMaturazione >= 0 && parsed.giorniMaturazione <= 1000
+          ? Math.round(parsed.giorniMaturazione)
+          : 60,
         acqua: ["bassa","media","alta"].includes(parsed.acqua) ? parsed.acqua : "media",
         sole: ["pieno","mezz'ombra","ombra"].includes(parsed.sole) ? parsed.sole : "pieno",
         difficolta: ["facile","media","difficile"].includes(parsed.difficolta) ? parsed.difficolta : "facile",
@@ -2892,6 +3009,7 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
         semina: [],
         trapianto: [],
         raccolta: [],
+        giorniMaturazione: 60,
         acqua: "media",
         sole: "pieno",
         difficolta: "facile",
@@ -2920,13 +3038,13 @@ Importante: i mesi devono essere numerati 1-12 (gennaio=1). Usa la tua conoscenz
         <div className="card p-4 mb-4" style={{ background: "var(--c-cream)" }}>
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Nome della pianta</span>
-            <div className="flex gap-2 mt-1">
+            <div className="flex flex-col sm:flex-row gap-2 mt-1">
               <input type="text" value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !searching && (e.preventDefault(), cercaInfo())}
                 placeholder="Es: Lavanda, Geranio, Pisello odoroso..."
-                className="flex-1 px-3 py-2 rounded-lg" style={{ border: "1.5px solid var(--c-border)", background: "white" }}/>
-              <button type="button" onClick={cercaInfo} disabled={!nome.trim() || searching} className="btn-primary">
+                className="flex-1 min-w-0 px-3 py-2 rounded-lg" style={{ border: "1.5px solid var(--c-border)", background: "white" }}/>
+              <button type="button" onClick={cercaInfo} disabled={!nome.trim() || searching} className="btn-primary w-full sm:w-auto justify-center whitespace-nowrap shrink-0">
                 {searching ? (
                   <>
                     <span className="animate-spin">⌛</span> Cerco...
@@ -3195,8 +3313,9 @@ function AgendaView({ userPlants, fullCatalog, appezzamenti }) {
           });
         }
 
-        // RACCOLTA: sabato mattina (idx 5) se il mese corrisponde e NON è ornamentale
-        if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale") {
+        // RACCOLTA: sabato mattina (idx 5) se il mese corrisponde e NON è ornamentale,
+        // e la singola pianta è matura (giorni dal trapianto >= giorniMaturazione)
+        if (giornoIdx === 5 && raccolta.includes(mese) && plant.categoria !== "ornamentale" && isReadyForHarvest(up, plant)) {
           tasks.push({
             day: giornoIdx, data: d,
             ora: orarioSuggerito("raccolta", mese),
